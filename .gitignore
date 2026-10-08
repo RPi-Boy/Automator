@@ -42,3 +42,6 @@ token.json
 
 # Build output
 .pio/
+
+# Per-machine check output
+jetson_selfcheck.txt

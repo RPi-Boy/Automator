@@ -2,7 +2,7 @@
 
 A simulated 4-DOF arm sorts objects into bins **by shape**. The perception and control stack runs as ROS 2 nodes
 on a Jetson Orin Nano (TensorRT), with an ESP32 (micro-ROS) as the actuator and safety controller.
-Design and rationale: [architecture.md](architecture.md). Known problems and fixes: [docs/PROBLEMS_AND_FIXES.md](docs/PROBLEMS_AND_FIXES.md). Measured results: [report.md](report.md).
+**Testing on a Jetson? Start with [instructions.md](instructions.md).** Design and rationale: [architecture.md](architecture.md). Known problems and fixes: [docs/PROBLEMS_AND_FIXES.md](docs/PROBLEMS_AND_FIXES.md). Measured results: [report.md](report.md).
 
 ## Quick start (PC)
 ```bash

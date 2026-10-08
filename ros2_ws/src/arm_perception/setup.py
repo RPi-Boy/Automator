@@ -1,3 +1,5 @@
+from glob import glob
+
 from setuptools import find_packages, setup
 
 package_name = 'arm_perception'
@@ -9,6 +11,7 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/launch', glob('launch/*.py')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -23,6 +26,7 @@ setup(
             'evidential_vision_node = arm_perception.evidential_vision_node:main',
             'joint_trajectory_node = arm_perception.joint_trajectory_node:main',
             'sim_bridge_node = arm_perception.sim_bridge_node:main',
+            'sim_viewer_node = arm_perception.sim_viewer_node:main',
         ],
     },
 )

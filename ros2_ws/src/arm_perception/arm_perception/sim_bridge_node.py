@@ -1,12 +1,14 @@
 """ROS2 node that plays the physical world: runs the PyBullet sorting scene headless and talks ROS.
 
-Publishes  : /camera/image_raw  sensor_msgs/Image rgb8 (rendered from the fixed sim camera, default 3 Hz)
+Publishes  : /sim/spectator    sensor_msgs/Image rgb8, wide view for humans (only rendered while someone subscribes)
+             /camera/image_raw  sensor_msgs/Image rgb8 (rendered from the fixed sim camera, default 3 Hz)
              /camera/reference  sensor_msgs/Image rgb8, latched: the empty scene (background model)
 Subscribes : /joint_commands    std_msgs/Float32MultiArray [q1..q4, gripper] -> drives the simulated arm
              /estop             std_msgs/Bool                -> freezes the arm at its current pose
 
 Parameters : objects (int, default 3), seed (int), respawn (bool: refill the table once it is empty),
-             inject_unknown (bool: put one random unseen mesh on the table to exercise the OOD e-stop)
+             inject_unknown (bool: put one random unseen mesh on the table to exercise the OOD e-stop),
+             gui (bool: open PyBullet's 3-D window, needs a display), spectator (bool), camera_hz (float)
 Runs on the Jetson (PyBullet DIRECT mode, CPU rendering) or any PC on the same ROS_DOMAIN_ID.
 """
 import sys
@@ -30,6 +32,15 @@ try:
 except ImportError:
     HAS_RCLPY = False
     Node = object
+
+
+def spectator_frame(client, w=640, h=480):
+    """Wide, human-friendly view of the whole workspace (the perception camera sees only the pick area)."""
+    import pybullet as p
+    view = p.computeViewMatrix([0.85, 0.75, 0.55], [0.15, 0.12, 0.12], [0, 0, 1])
+    proj = p.computeProjectionMatrixFOV(50, w / h, 0.05, 3.0)
+    img = p.getCameraImage(w, h, view, proj, renderer=p.ER_TINY_RENDERER, physicsClientId=client)[2]
+    return np.reshape(img, (h, w, 4))[:, :, :3].astype(np.uint8)
 
 
 def rgb_to_msg(rgb, stamp, frame_id='camera'):
@@ -57,9 +68,15 @@ class SimBridgeNode(Node):
         self.declare_parameter('respawn', True)
         self.declare_parameter('inject_unknown', False)
         self.declare_parameter('camera_hz', 3.0)
+        self.declare_parameter('gui', False)            # open PyBullet's own 3-D window (needs a display)
+        self.declare_parameter('spectator', True)       # also publish /sim/spectator, a nicer view for people
 
         self.lock = threading.Lock()  # PyBullet is not thread-safe
-        self.client = p.connect(p.DIRECT)
+        gui = bool(self.get_parameter('gui').value)
+        self.client = p.connect(p.GUI if gui else p.DIRECT)
+        if gui:
+            p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0, physicsClientId=self.client)
+            p.resetDebugVisualizerCamera(1.0, 40, -35, [0.15, 0.12, 0.1], physicsClientId=self.client)
         p.setTimeStep(1.0 / PHYS_HZ, physicsClientId=self.client)
         self.scene = SortScene(self.client)
         self.scene.build_static()
@@ -71,6 +88,8 @@ class SimBridgeNode(Node):
         latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.cam_pub = self.create_publisher(Image, '/camera/image_raw', 1)
         self.ref_pub = self.create_publisher(Image, '/camera/reference', latched)
+        self.spec_pub = self.create_publisher(Image, '/sim/spectator', 1)
+        self.frame_count = 0
         self.create_subscription(Float32MultiArray, '/joint_commands', self.on_cmd, 10)
         self.create_subscription(Bool, '/estop', self.on_estop, latched)
 
@@ -116,6 +135,11 @@ class SimBridgeNode(Node):
             remaining = sum(1 for pos in self.scene.object_positions()
                             if np.hypot(pos[0], pos[1]) > 0.28 and abs(np.arctan2(pos[1], pos[0])) < 0.8)
         self.cam_pub.publish(rgb_to_msg(rgb, self.get_clock().now().to_msg()))
+        self.frame_count += 1
+        if self.get_parameter('spectator').value and self.spec_pub.get_subscription_count() > 0:
+            with self.lock:
+                view = spectator_frame(self.client)
+            self.spec_pub.publish(rgb_to_msg(view, self.get_clock().now().to_msg()))
         if remaining == 0 and self.get_parameter('respawn').value and not self.arm.held:
             self.spawn_objects()
 

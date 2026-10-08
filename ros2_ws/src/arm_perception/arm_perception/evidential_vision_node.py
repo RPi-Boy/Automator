@@ -3,7 +3,8 @@
 Subscribes : /camera/image_raw   sensor_msgs/Image (rgb8 or bgr8)
              /camera/reference   sensor_msgs/Image, latched: the same view with no objects (background model)
              /arm_busy           std_msgs/Bool from joint_trajectory_node: perception pauses while the arm moves
-Publishes  : /arm_target         std_msgs/Float32MultiArray [x, y, z, class_id, uncertainty]
+Publishes  : /perception/debug  sensor_msgs/Image: the frame with boxes, class and uncertainty (only built while subscribed)
+             /arm_target         std_msgs/Float32MultiArray [x, y, z, class_id, uncertainty]
              - the least-uncertain known object, or
              - if ANY object in the pick area is out-of-distribution (uncertainty > threshold), that object,
                so the downstream e-stop logic fires.
@@ -17,6 +18,7 @@ import time
 import numpy as np
 
 from ._paths import find_project_root  # noqa: E402
+from .overlay import draw_detections  # noqa: E402
 
 sys.path.insert(0, find_project_root())
 
@@ -44,7 +46,7 @@ def image_to_rgb(msg):
     return img[:, :, ::-1].copy() if msg.encoding == 'bgr8' else img.copy()
 
 
-def perceive(backend, camera, rgb, reference):
+def perceive(backend, camera, rgb, reference, with_boxes=False):
     """Detect objects in the pick area and run the network on all crops in one batch.
     Returns [{'xyz', 'cls', 'unc'}] (xyz = geometric back-projection + learned residual)."""
     dets = [d for d in detect(rgb, reference, camera) if in_pick_region(d['geom_xyz'][:2])]
@@ -53,7 +55,7 @@ def perceive(backend, camera, rgb, reference):
     crops = np.stack([d['crop'] for d in dets]).transpose(0, 3, 1, 2).astype(np.float32) / 255.0
     bbox = np.stack([d['bbox_feat'] for d in dets]).astype(np.float32)
     logits, offset, unc = backend(np.ascontiguousarray(crops), bbox)
-    return [{'xyz': d['geom_xyz'] + offset[i], 'cls': int(logits[i].argmax()), 'unc': float(unc[i])}
+    return [{'xyz': d['geom_xyz'] + offset[i], 'cls': int(logits[i].argmax()), 'unc': float(unc[i]), 'bbox': d['bbox']}
             for i, d in enumerate(dets)]
 
 
@@ -88,6 +90,7 @@ class EvidentialVisionNode(Node):
         self.create_subscription(Image, '/camera/image_raw', self.on_image, 1)
         self.create_subscription(Bool, '/arm_busy', self.on_busy, 1)
         self.pub = self.create_publisher(Float32MultiArray, '/arm_target', 10)
+        self.dbg_pub = self.create_publisher(Image, '/perception/debug', 1)   # annotated frame, only built when watched
         self.get_logger().info(f'Vision node up: backend={self.backend.name}, '
                                f'reference={"loaded" if self.reference is not None else "waiting"}')
 
@@ -111,7 +114,14 @@ class EvidentialVisionNode(Node):
             return
         self.last_run = now
         t0 = time.perf_counter()
-        results = perceive(self.backend, self.camera, image_to_rgb(msg), self.reference)
+        rgb = image_to_rgb(msg)
+        results = perceive(self.backend, self.camera, rgb, self.reference)
+        ms = (time.perf_counter() - t0) * 1000
+        if self.dbg_pub.get_subscription_count() > 0:
+            dbg = draw_detections(rgb, results, self.threshold, ms)
+            out_img = Image(height=dbg.shape[0], width=dbg.shape[1], encoding='rgb8', step=dbg.shape[1] * 3, data=dbg.tobytes())
+            out_img.header = msg.header
+            self.dbg_pub.publish(out_img)
         target = choose_target(results, self.threshold)
         if target is None:
             return

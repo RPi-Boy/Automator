@@ -1,6 +1,8 @@
 /*
  * ESP32 micro-ROS actuator controller for the 4-DOF arm.
  *
+ * Publishes  : /esp32/status (Int32, 5 Hz): bit0 e-stop latched, bit1 motors enabled, bit2 fresh command,
+ *              bit3 hardware e-stop line asserted, bits 8-23 number of /joint_commands received
  * Subscribes : /joint_commands (Float32MultiArray [q1..q4 rad, gripper -1..1])  from joint_trajectory_node
  *              /arm_target     (Float32MultiArray [x,y,z,class,uncertainty])    safety gate: u > 0.75 -> halt
  *              /estop          (Bool)    true -> halt
@@ -25,6 +27,7 @@
 #include <rclc/executor.h>
 #include <std_msgs/msg/float32_multi_array.h>
 #include <std_msgs/msg/bool.h>
+#include <std_msgs/msg/int32.h>
 #include <rmw_microros/rmw_microros.h>
 #include <soc/gpio_struct.h>
 #include "pins.h"
@@ -54,6 +57,9 @@ static void IRAM_ATTR estopIsr() { haltMotors(); }
 
 // ---- micro-ROS objects ----
 static rcl_subscription_t sub_cmd, sub_target, sub_estop, sub_reset;
+static rcl_publisher_t pub_status;
+static std_msgs__msg__Int32 msg_status;
+static volatile uint16_t cmd_count = 0;
 static std_msgs__msg__Float32MultiArray msg_cmd, msg_target;
 static std_msgs__msg__Bool msg_estop, msg_reset;
 static rclc_executor_t executor;
@@ -71,6 +77,7 @@ static void cmdCb(const void* m) {
   target_dirty = true;
   last_cmd_ms = millis();
   have_cmd = true;
+  cmd_count++;
   portEXIT_CRITICAL(&mux);
 }
 
@@ -123,6 +130,9 @@ static bool microRosInit() {
   rclc_subscription_init_default(&sub_reset, &node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool), "/estop_reset");
 
+  rclc_publisher_init_default(&pub_status, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32), "/esp32/status");
+
   rclc_executor_init(&executor, &support.context, 4, &allocator);
   rclc_executor_add_subscription(&executor, &sub_cmd, &msg_cmd, &cmdCb, ON_NEW_DATA);
   rclc_executor_add_subscription(&executor, &sub_target, &msg_target, &targetCb, ON_NEW_DATA);
@@ -137,9 +147,18 @@ static void microRosTask(void*) {
     while (rmw_uros_ping_agent(100, 1) != RMW_RET_OK) delay(100);
     if (!microRosInit()) { delay(500); continue; }
 
-    uint32_t last_ping = millis();
+    uint32_t last_ping = millis(), last_status = millis();
     for (;;) {
       rclc_executor_spin_some(&executor, RCL_MS_TO_NS(5));
+      if (millis() - last_status > 200) {         // 5 Hz heartbeat so people can see the link is alive
+        last_status = millis();
+        // bit0 e-stop latched, bit1 motors enabled, bit2 command fresh (<200 ms), bit3 hardware e-stop line low,
+        // bits 8-23 count of /joint_commands received
+        bool fresh = have_cmd && (int32_t)(millis() - last_cmd_ms) <= (int32_t)WATCHDOG_MS;
+        msg_status.data = (estop_latched ? 1 : 0) | (steppers.motorsEnabled() ? 2 : 0) | (fresh ? 4 : 0) |
+                          (digitalRead(ESTOP_IN_PIN) == LOW ? 8 : 0) | ((int32_t)cmd_count << 8);
+        rcl_publish(&pub_status, &msg_status, NULL);
+      }
       if (millis() - last_ping > 1000) {          // agent vanished -> tear down and reconnect
         last_ping = millis();
         if (rmw_uros_ping_agent(50, 1) != RMW_RET_OK) break;
@@ -151,6 +170,7 @@ static void microRosTask(void*) {
     rcl_subscription_fini(&sub_target, &node);
     rcl_subscription_fini(&sub_estop, &node);
     rcl_subscription_fini(&sub_reset, &node);
+    rcl_publisher_fini(&pub_status, &node);
     rcl_node_fini(&node);
     rclc_support_fini(&support);
   }
