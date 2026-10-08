@@ -1,0 +1,67 @@
+{
+  "calibration": {
+    "percentile": 99.0,
+    "distance_at_threshold": 21.107696533203125
+  },
+  "test_id": {
+    "n": 2217,
+    "shape_accuracy": 0.9990978800180425,
+    "confusion": [
+      [
+        563,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        588,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        510,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        554
+      ]
+    ],
+    "xyz_error_mm_geometry_only": {
+      "mean": 5.430181503295898,
+      "p95": 10.975539207458496
+    },
+    "xyz_error_mm_with_refiner": {
+      "mean": 1.967434287071228,
+      "p95": 4.167820453643799
+    },
+    "xy_error_mm_geometry_only": 3.5042831897735596,
+    "xy_error_mm_with_refiner": 1.5089681148529053,
+    "false_estop_rate_at_0.75": 0.007216959855660803
+  },
+  "ood_val": {
+    "n": 918,
+    "auroc_vs_test_id": 0.9306119380544279,
+    "detection_rate_at_0.75": 0.7636165577342048,
+    "fpr_at_95_tpr": 0.16230936819172112,
+    "detection_rate_at_0.75_urdf_meshes": 0.9708879184861717,
+    "auroc_urdf_meshes": 0.9987052542908148,
+    "detection_rate_at_0.75_capsule": 0.1471861471861472,
+    "auroc_capsule": 0.7281006469098485
+  },
+  "ood_test": {
+    "n": 906,
+    "auroc_vs_test_id": 0.933887350505476,
+    "detection_rate_at_0.75": 0.7682119205298014,
+    "fpr_at_95_tpr": 0.15562913907284767,
+    "detection_rate_at_0.75_urdf_meshes": 0.9542857142857143,
+    "auroc_urdf_meshes": 0.9985243894580836,
+    "detection_rate_at_0.75_capsule": 0.13592233009708737,
+    "auroc_capsule": 0.71424692688011
+  }
+}

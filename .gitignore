@@ -1,0 +1,44 @@
+# Python / Byte-compiled
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Distribution / Packaging
+build/
+devel/
+install/
+log/
+dist/
+*.egg-info/
+
+# Model Checkpoints & Datasets
+*.pth
+*.pt
+*.onnx
+*.engine
+*.trt
+*.zip
+*.log
+trt_error.log
+data/
+checkpoints/
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+*.swp
+.env
+
+# Secrets
+client_secrets.json
+token.json
+
+# Build output
+.pio/

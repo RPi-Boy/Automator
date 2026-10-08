@@ -1,0 +1,11 @@
+{
+  "success_radius_m": 0.01,
+  "timesteps": 300000,
+  "best_checkpoint": {
+    "episodes": 100,
+    "success_rate": 0.16,
+    "final_error_mm_mean": 18.370195617921322,
+    "final_error_mm_p95": 27.990408910324177,
+    "steps_to_success_mean": 69.1875
+  }
+}

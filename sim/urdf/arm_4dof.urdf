@@ -1,0 +1,211 @@
+<?xml version="1.0"?>
+<robot name="arm_4dof">
+  <!-- Base Link -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.1" radius="0.1"/>
+      </geometry>
+      <material name="dark_grey">
+        <color rgba="0.2 0.2 0.2 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.1" radius="0.1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 1: Base Rotation (Yaw) -->
+  <joint name="joint_1" type="revolute">
+    <parent link="base_link"/>
+    <child link="link_1"/>
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.14159" upper="3.14159" effort="10.0" velocity="2.0"/>
+  </joint>
+
+  <!-- Link 1 -->
+  <link name="link_1">
+    <visual>
+      <origin xyz="0 0 0.1" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.2" radius="0.04"/>
+      </geometry>
+      <material name="blue">
+        <color rgba="0.0 0.4 0.8 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.1" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.2" radius="0.04"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.8"/>
+      <inertia ixx="0.003" ixy="0.0" ixz="0.0" iyy="0.003" iyz="0.0" izz="0.001"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 2: Shoulder Pitch -->
+  <joint name="joint_2" type="revolute">
+    <parent link="link_1"/>
+    <child link="link_2"/>
+    <origin xyz="0 0 0.2" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.5708" upper="1.5708" effort="10.0" velocity="2.0"/>
+  </joint>
+
+  <!-- Link 2 -->
+  <link name="link_2">
+    <visual>
+      <origin xyz="0 0 0.15" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.3" radius="0.035"/>
+      </geometry>
+      <material name="cyan">
+        <color rgba="0.0 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.15" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.3" radius="0.035"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.6"/>
+      <inertia ixx="0.004" ixy="0.0" ixz="0.0" iyy="0.004" iyz="0.0" izz="0.001"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 3: Elbow Pitch -->
+  <joint name="joint_3" type="revolute">
+    <parent link="link_2"/>
+    <child link="link_3"/>
+    <origin xyz="0 0 0.3" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-2.0" upper="2.0" effort="8.0" velocity="2.5"/>
+  </joint>
+
+  <!-- Link 3 -->
+  <link name="link_3">
+    <visual>
+      <origin xyz="0 0 0.125" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.25" radius="0.03"/>
+      </geometry>
+      <material name="orange">
+        <color rgba="1.0 0.5 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.125" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.25" radius="0.03"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.4"/>
+      <inertia ixx="0.002" ixy="0.0" ixz="0.0" iyy="0.002" iyz="0.0" izz="0.0005"/>
+    </inertial>
+  </link>
+
+  <!-- Joint 4: Wrist Pitch -->
+  <joint name="joint_4" type="revolute">
+    <parent link="link_3"/>
+    <child link="ee_link"/>
+    <origin xyz="0 0 0.25" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.5708" upper="1.5708" effort="5.0" velocity="3.0"/>
+  </joint>
+
+  <!-- End-Effector / Gripper Base Link -->
+  <link name="ee_link">
+    <visual>
+      <origin xyz="0 0 0.02" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.08 0.04 0.04"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1.0 0.1 0.1 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.02" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.08 0.04 0.04"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.2"/>
+      <inertia ixx="0.0005" ixy="0.0" ixz="0.0" iyy="0.0005" iyz="0.0" izz="0.0005"/>
+    </inertial>
+  </link>
+
+  <!-- Left Angular Gripper Finger Joint -->
+  <joint name="left_finger_joint" type="revolute">
+    <parent link="ee_link"/>
+    <child link="left_finger"/>
+    <origin xyz="0.03 0 0.04" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.6" upper="0.6" effort="5.0" velocity="2.0"/>
+  </joint>
+
+  <!-- Left Finger Link -->
+  <link name="left_finger">
+    <visual>
+      <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.012 0.025 0.05"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.012 0.025 0.05"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
+    </inertial>
+  </link>
+
+  <!-- Right Angular Gripper Finger Joint -->
+  <joint name="right_finger_joint" type="revolute">
+    <parent link="ee_link"/>
+    <child link="right_finger"/>
+    <origin xyz="-0.03 0 0.04" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.6" upper="0.6" effort="5.0" velocity="2.0"/>
+  </joint>
+
+  <!-- Right Finger Link -->
+  <link name="right_finger">
+    <visual>
+      <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.012 0.025 0.05"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.012 0.025 0.05"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001"/>
+    </inertial>
+  </link>
+</robot>
