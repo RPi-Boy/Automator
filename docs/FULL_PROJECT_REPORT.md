@@ -68,7 +68,7 @@ Headline lessons: the original model was trained on random-noise images and its 
 - Firmware: no micro-ROS at all; `loop()` fed itself a hard-coded target; the "hardware ISR" was an ordinary function call; `Serial.printf` calls would corrupt the micro-ROS serial transport; the motor-enable pin was GPIO 12 (flash-voltage boot strap).
 - The "latency" figure summed three unrelated timings (planner + random-weight 224×224 dummy inference + a PyBullet physics step).
 - `scripts/train_rl_agent.py` used `EvalCallback` without importing it (NameError once stable-baselines3 was present).
-- URDF elbow limit ±2.0 rad makes any target within ~0.30 m of the shoulder unreachable, yet objects spawned at r = 0.20–0.35 m.
+- URDF elbow limit ±2.0 rad makes any target within ~0.30 m of the shoulder unreachable, yet objects spawned at r = 0.20-0.35 m.
 
 A full 40-item list with fixes is in `docs/PROBLEMS_AND_FIXES.md`.
 
@@ -98,7 +98,7 @@ PyBullet scene (sim_bridge_node)                         Jetson Orin Nano
 - **Geometry first, learning second.** Blob centroids are back-projected onto the table plane (detector geometry alone: 5.43 mm mean error). The CNN adds a learned residual that uses crop and bounding-box features, bringing error to 1.97 mm.
 - **Calibrated uncertainty.** Minimum Mahalanobis distance to the four class means (tied covariance), mapped to [0, 1] so that 0.75 equals the 99th percentile of held-out in-distribution distances (raw distance 21.11). The computation lives inside the exported graph.
 - **Analytic IK** (numpy only) instead of PyBullet IK, so the Jetson needs no physics engine for planning.
-- **Workspace restricted** to where the ±2.0 rad elbow limit allows IK: pick region r 0.30–0.38 m, |θ| ≤ 0.7 rad; bins at r = 0.33 m, angles 0.95/1.45/1.95/2.45 rad. IK feasibility checked over 2,000 random picks × classes: 0 infeasible.
+- **Workspace restricted** to where the ±2.0 rad elbow limit allows IK: pick region r 0.30-0.38 m, |θ| ≤ 0.7 rad; bins at r = 0.33 m, angles 0.95/1.45/1.95/2.45 rad. IK feasibility checked over 2,000 random picks × classes: 0 infeasible.
 - **Fixed camera** (replacing a decorative marker 0.8 m away giving ~17 px objects): eye (0.15, 0.40, 0.45), target (0.32, 0, 0.03), 55° vertical FOV, 640×480 (~1.3 px/mm). Shared by dataset, demo and Jetson node through `perception/camera.py`.
 - **Shared configuration.** Tool length (0.09 m) and the four bin positions live in `arm_perception/config.py`, used by the node, demo, tests and simulator.
 
@@ -110,8 +110,8 @@ Four sortable shapes with randomised size (±15 %): sphere, cube, cylinder, bric
 ## 4. Data
 
 ### 4.1 Generator (`scripts/generate_sim_dataset.py`)
-- In-distribution scenes: 1–4 objects per scene from the 4 classes; random colour, size, yaw, position (pick region), one of 8 light directions; trays in view.
-- OOD scenes: unseen objects only: random procedural meshes from `pybullet_data/random_urdfs` (pool 0–499 for validation, pool 500–999 for test; scaled to ≤ 5.5 cm and dropped/settled) plus a held-out capsule primitive (25 % of OOD scenes).
+- In-distribution scenes: 1-4 objects per scene from the 4 classes; random colour, size, yaw, position (pick region), one of 8 light directions; trays in view.
+- OOD scenes: unseen objects only: random procedural meshes from `pybullet_data/random_urdfs` (pool 0-499 for validation, pool 500-999 for test; scaled to ≤ 5.5 cm and dropped/settled) plus a held-out capsule primitive (25 % of OOD scenes).
 - Each detected blob becomes one sample: 128×128 masked crop, bbox features, first-pass geometric xyz, ground-truth object centre (matched through the segmentation mask; blobs with < 70 % purity are dropped as merged).
 - Splits are by scene.
 
@@ -119,14 +119,16 @@ Four sortable shapes with randomised size (±15 %): sphere, cube, cylinder, bric
 | Dataset version | Scenes | Samples | Notes |
 |---|---|---|---|
 | Mini (smoke test) | 40 + 10 | 110 | pipeline check; detection recall 110/126 at 0.09 m separation |
-| v1 | 3,000 ID + 800 OOD | 5,385 | pick region r 0.27–0.35; recall 5,385/5,413; train 2,845 / val 578 / test 577; OOD val 688 / test 697 |
+| v1 | 3,000 ID + 800 OOD | 5,385 | pick region r 0.27-0.35; recall 5,385/5,413; train 2,845 / val 578 / test 577; OOD val 688 / test 697 |
 | v2 | 6,000 ID + 1,000 OOD | 16,495 | same layout, more data; recall 16,495/16,795; train 10,302 / val 2,139 / test 2,216; OOD 928 / 910 |
-| v3 | 6,000 + 1,000 | 16,466 | new layout (r 0.30–0.38); unmasked crops, no trays in data; train 10,289 / val 2,134 / test 2,217; OOD 920 / 906 |
+| v3 | 6,000 + 1,000 | 16,466 | new layout (r 0.30-0.38); unmasked crops, no trays in data; train 10,289 / val 2,134 / test 2,217; OOD 920 / 906 |
 | **v4 (final)** | 6,000 + 1,000 | **16,464** | new layout, **masked crops, trays in scene**; recall 16,464/16,795 (98.0 %), 109 merged/unmatched blobs dropped; train **10,289** (sphere 2,599 / cube 2,568 / cylinder 2,598 / brick 2,524), val **2,134**, test **2,217**, OOD val **918**, OOD test **906** |
 
-Generation time: ~53 s (3,800 scenes) to ~250 s (7,000 scenes) on 10–14 worker processes; rendering is ~0.14 s per 640×480 frame (TinyRenderer).
+Note on the counts: the 16,464 samples are 14,640 known-object crops (10,289 + 2,134 + 2,217) plus 1,824 unseen-object crops (918 + 906). The recall figure 16,464/16,795 divides the matched crops by the 16,795 objects spawned in the rendered scenes (98.0 %), so its numerator is the same 16,464.
 
-Dataset changes along the way: pick region moved outward (v2→v3) after IK rejected objects at r < 0.29 m; separation raised 0.09 → 0.12 → 0.11 m and the position sampler made restart-based after greedy sampling failed to fit 3–4 objects; crops became masked and trays were added (v3→v4) after a measured domain-shift problem (§13).
+Generation time: ~53 s (3,800 scenes) to ~250 s (7,000 scenes) on 10-14 worker processes; rendering is ~0.14 s per 640×480 frame (TinyRenderer).
+
+Dataset changes along the way: pick region moved outward (v2→v3) after IK rejected objects at r < 0.29 m; separation raised 0.09 → 0.12 → 0.11 m and the position sampler made restart-based after greedy sampling failed to fit 3-4 objects; crops became masked and trays were added (v3→v4) after a measured domain-shift problem (§13).
 
 ---
 
@@ -136,7 +138,7 @@ Dataset changes along the way: pick region moved outward (v2→v3) after IK reje
 MobileNetV3-small features (ImageNet-pretrained) → global pool → 128-d embedding (ReLU) → heads: 4-way shape classifier; xyz residual regressor (embedding + 4 bbox features → 64 → 3, output in units of 1 cm). ImageNet normalisation is inside the model. The Mahalanobis statistics are buffers fitted after training. Exported graph `(crop, bbox_feat) → (logits, offset, uncertainty)` with dynamic batch (`models/perception.onnx`, 4.1 MB).
 
 ### 5.2 Training recipe (final)
-AdamW (lr 1e-3, weight decay 1e-4), OneCycle schedule, batch 64, **20 epochs**, label smoothing 0.05; loss = cross-entropy + 0.5 × SmoothL1(offset in cm). On-GPU/CPU augmentation: brightness/contrast ±20 %, random colour-channel permutation, scale ±8 %, translation ±4 %, Gaussian noise σ 0.02; no flips (offsets are world-frame). After training: switch to eval mode, fit Mahalanobis means and tied inverse covariance (ridge 1e-3 × mean variance) on **clean** train features, calibrate the 0.75 threshold on validation features (99th percentile), evaluate on untouched test and OOD splits. Training loss (final run) fell from 0.742 (epoch 1) to 0.204 (epoch 16). Run time on CPU: ~10–11 min uncontended (~32–47 s/epoch); the final run took ~50 min because other jobs shared the CPU.
+AdamW (lr 1e-3, weight decay 1e-4), OneCycle schedule, batch 64, **20 epochs**, label smoothing 0.05; loss = cross-entropy + 0.5 × SmoothL1(offset in cm). On-GPU/CPU augmentation: brightness/contrast ±20 %, random colour-channel permutation, scale ±8 %, translation ±4 %, Gaussian noise σ 0.02; no flips (offsets are world-frame). After training: switch to eval mode, fit Mahalanobis means and tied inverse covariance (ridge 1e-3 × mean variance) on **clean** train features, calibrate the 0.75 threshold on validation features (99th percentile), evaluate on untouched test and OOD splits. Training loss (final run) fell from 0.742 (epoch 1) to 0.204 (epoch 16). Run time on CPU: ~10-11 min uncontended (~32-47 s/epoch); the final run took ~50 min because other jobs shared the CPU.
 
 ### 5.3 Experiment history (*measured*; earlier rows are superseded)
 | Run | Data | Epochs | Shape acc. | xyz mean / p95 (mm) | False e-stop @0.75 | OOD AUROC (test) | Mesh AUROC | Capsule AUROC | Notes |
@@ -181,7 +183,7 @@ Interpretation: arbitrary unseen objects are caught reliably; an unseen shape th
 - **Geometry** from the URDF: shoulder at z = 0.25 m; links 0.30 m and 0.25 m; yaw about z; three pitch joints; fingertips 0.09 m beyond the wrist.
 - **IK** closed-form; elbow-forward then mirrored solution; clamped to URDF limits (|q1| ≤ π, |q2| ≤ 1.5708, |q3| ≤ 2.0, |q4| ≤ 1.5708); raises `IKError` if unreachable.
 - **Verification against PyBullet FK:** analytic FK equals PyBullet on 50 random joint configurations (< 1e-6 m); IK reaches 300 random pick-region targets to < 1 mm; every refused target lies within 0.31 m of the shoulder (elbow-limit dead zone).
-- **Reachability map (wrist target, before restricting the workspace):** with the original r = 0.20–0.35 m spawn range, targets at r ≤ 0.22 m were unreachable at every tested height and z = 0.25 m was unreachable for r ≤ 0.30 m (e.g. z 0.05: r 0.25 ok, 0.20 and 0.22 not; z 0.11: ok from r 0.30; z 0.25: ok only at 0.35). This drove the workspace restriction.
+- **Reachability map (wrist target, before restricting the workspace):** with the original r = 0.20-0.35 m spawn range, targets at r ≤ 0.22 m were unreachable at every tested height and z = 0.25 m was unreachable for r ≤ 0.30 m (e.g. z 0.05: r 0.25 ok, 0.20 and 0.22 not; z 0.11: ok from r 0.30; z 0.25: ok only at 0.35). This drove the workspace restriction.
 - **Sequencer:** waypoints approach (tip +0.05 m) → grasp (+0.01 m) → close → lift → transport → release (+0.005 m) → open → retreat → home; joint-space quintic segments (zero velocity/acceleration at both ends), duration = max(1 s, time to respect 80 % of URDF velocity limits using the quintic peak factor 1.875). Lift height = lowest IK-feasible z above both pick and bin (found: 0.15 m for the tested pair). A full 4-object pick cycle in simulation takes ≈ 11 s of simulated time.
 - **Floor safety:** fingertip height stays > 0.02 m on every tested path.
 
@@ -198,13 +200,13 @@ Interpretation: arbitrary unseen objects are caught reliably; an unseen shape th
 | + rolling friction/damping, rimmed trays, release 0.5 cm above floor | 10 trials × 4 | **32 / 40 = 80.0 %**; 4 of 10 trials ended in an e-stop on the last object |
 | + masked crops, trays in training data (final model D) | 20 × 4, "least-uncertain first" policy | **73 / 80 = 91.2 %**; 4 trials ended in e-stop |
 | + node-consistent policy (any OOD object stops the arm) | 20 × 4 | **70 / 80 = 87.5 %**; 3 trials ended in e-stop |
-| + node-faithful loop (vision only when idle/settled) and image-space separation of spawned objects (**final**) | 20 × 4, seeds 1000–1019 | **74 / 80 = 92.5 %**, 0 e-stops |
+| + node-faithful loop (vision only when idle/settled) and image-space separation of spawned objects (**final**) | 20 × 4, seeds 1000-1019 | **74 / 80 = 92.5 %**, 0 e-stops |
 
 A physics diagnosis explains the 43.8 %→80 % jump: the carried object tracked the fingertip correctly, but after release it landed tilted, tipped and **rolled indefinitely** (PyBullet default rolling friction is zero).
 
 ### 7.2 Final result (`models/sort_results.json`)
 - 20 trials × 4 known objects: **74 / 80 correct**, 0 trials ended in an e-stop.
-- Failures (6, all "ended outside own tray"): sphere ended ~10 cm from its tray (trial 4), cube 10.7 cm from its tray (trial 8), a brick in the sphere tray (trial 13 — a genuine misclassification) plus a sphere 11 cm away (trial 13), cube 9.8 cm away (trial 15), brick 11 cm away (trial 17). Causes other than the one misclassification were not isolated (candidates: knocked by the arm, bounced off a rim, dropped early).
+- Failures (6, all "ended outside own tray"): sphere ended ~10 cm from its tray (trial 4), cube 10.7 cm from its tray (trial 8), a brick in the sphere tray (trial 13 - a genuine misclassification) plus a sphere 11 cm away (trial 13), cube 9.8 cm away (trial 15), brick 11 cm away (trial 17). Causes other than the one misclassification were not isolated (candidates: knocked by the arm, bounced off a rim, dropped early).
 - Demo video of trial 0: `models/sort_demo.mp4` (875 frames).
 
 ### 7.3 Simulation fidelity caveats
@@ -214,17 +216,17 @@ The grasp is a fixed constraint created at the object's current pose when the gr
 
 ## 8. Safety behaviour (OOD e-stop)
 
-### 8.1 Unseen-object test (`models/sort_unknown_results.json`, seeds 5000–5029)
+### 8.1 Unseen-object test (`models/sort_unknown_results.json`, seeds 5000-5029)
 30 trials, each with 3 known objects and 1 unseen random mesh:
 - **e-stop in 25 / 30 trials, all 25 on the unseen object, 0 on a known object.**
 - The unseen mesh started inside the pick region in 27 of 30 trials; vision saw it in 25 trials and flagged it in all 25.
-- In the other 5 trials the detector never saw the unseen object (background-subtraction miss, likely low contrast or small/flat meshes — not isolated); the arm sorted the known objects and moved an unseen object in 1 / 30 trials.
+- In the other 5 trials the detector never saw the unseen object (background-subtraction miss, likely low contrast or small/flat meshes - not isolated); the arm sorted the known objects and moved an unseen object in 1 / 30 trials.
 - (An earlier version of the same test with a slightly different decision policy gave 26 / 30 e-stops and 1 / 30 unseen objects moved.)
 
 ### 8.2 Diagnostics behind the safety design
 | Experiment | Finding |
 |---|---|
-| Single-object scenes, 300 samples each, without / with trays (unmasked model) | fraction u > 0.75: **0.3 %** vs **2.0 %**; for θ 0.35–0.7 it rose from 0 % to **7.5 %** with trays → trays/neighbours in the crop context caused domain shift → fixed by masked crops + trays in data |
+| Single-object scenes, 300 samples each, without / with trays (unmasked model) | fraction u > 0.75: **0.3 %** vs **2.0 %**; for θ 0.35-0.7 it rose from 0 % to **7.5 %** with trays → trays/neighbours in the crop context caused domain shift → fixed by masked crops + trays in data |
 | Single-object scenes, final model, 400 samples | overall **0.5 %** false alarms (consistent with 99th-percentile calibration); 1 of 23 near a tray; per class: sphere 0 %, cube 0 %, cylinder 1 %, brick 1.1 % |
 | 4-object scenes, 150 scenes, 590 blobs | **10 blobs contained > 1 object and all 10 were flagged**; single-object blobs 6 / 580 (1.0 %) flagged → merged silhouettes drove many "false" e-stops → demo now spawns objects ≥ 100 px apart in the image |
 | Vision running during arm motion (3 sampled runs, 49 / 46 / 54 checks at 5 Hz) | u > 0.75 in 0 / 0 / 4 checks (arm's own links and held object crossing the pick area) → vision now pauses while `/arm_busy` + 0.6 s settle; tradeoff: an unknown object entering mid-motion is caught only when the arm stops |
@@ -237,11 +239,11 @@ The grasp is a fixed constraint created at the object's current pose when the gr
 Pick-and-place with `-distance` reward, 3 object types, 18-d observation. Never succeeded (0.0 % in the integration test, RMSE 0.363 m). The original Colab runs (best checkpoints `models/best_model.zip`, `best_sac_policy.zip`) were not re-evaluated; the training script could not run as written (missing `EvalCallback` import). The architecture document's "14-d state / 4-d action" also disagreed with the 18-d / 5-d code.
 
 ### 9.2 New task: fingertip reach, 1 cm success radius (`sim/reach_env.py`, `scripts/train_sac_reach.py`)
-Reach a random target (full yaw, r 0.27–0.36 m, z 0.05–0.30 m, kept only if IK-reachable); episode 150 steps at 60 Hz control; action = 4 joint velocities (× 2 rad/s); SAC (MlpPolicy 256×256, lr 3e-4, buffer 300k, batch 256, γ 0.98, learning_starts 5,000, auto entropy), evaluated every 10k steps on 20 episodes.
+Reach a random target (full yaw, r 0.27-0.36 m, z 0.05-0.30 m, kept only if IK-reachable); episode 150 steps at 60 Hz control; action = 4 joint velocities (× 2 rad/s); SAC (MlpPolicy 256×256, lr 3e-4, buffer 300k, batch 256, γ 0.98, learning_starts 5,000, auto entropy), evaluated every 10k steps on 20 episodes.
 
 | Version | Observation / reward | Outcome (*measured*) |
 |---|---|---|
-| v1 | 14-d (no target–tip delta); reward −dist − 0.01·‖a‖² + 10 on success | evaluation reward −99.8 (10k steps) → −24.1 (150k steps), plateaued at ≈ 16 cm average distance; **stopped at 150k steps** |
+| v1 | 14-d (no target-tip delta); reward −dist − 0.01·‖a‖² + 10 on success | evaluation reward −99.8 (10k steps) → −24.1 (150k steps), plateaued at ≈ 16 cm average distance; **stopped at 150k steps** |
 | **v2 (final)** | 17-d (adds target − fingertip); reward −10·dist − 0.01·‖a‖² + 1 inside 3 cm + 20 on success | evaluation reward −586 (10k) → −259 (30k) → −146 (100k) → −104 (230k) → −116 (260k); finished 300k steps |
 
 Final evaluation of the best v2 checkpoint, **100 fresh episodes** (`models/sac_reach/metrics.json`):
@@ -249,7 +251,7 @@ Final evaluation of the best v2 checkpoint, **100 fresh episodes** (`models/sac_
 - final fingertip error: mean **18.4 mm**, p95 **28.0 mm**;
 - steps to success (successful episodes only): 69 of 150.
 
-Throughput: ~3,200 simulator steps/s without learning; SAC training ran at 59–82 steps/s on 4 threads while sharing the CPU (~1.5 h for 300k steps). Reward was still improving at 300k steps; a 1–2 M step run is the obvious next experiment (not done). The sorting pipeline does not depend on SAC: its IK reaches targets in < 1 mm.
+Throughput: ~3,200 simulator steps/s without learning; SAC training ran at 59-82 steps/s on 4 threads while sharing the CPU (~1.5 h for 300k steps). Reward was still improving at 300k steps; a 1-2 M step run is the obvious next experiment (not done). The sorting pipeline does not depend on SAC: its IK reaches targets in < 1 mm.
 
 ---
 
@@ -331,7 +333,7 @@ Test-suite corrections made during the rework: the ONNX parity test initially fa
 
 ## 13. Debugging log: root causes found while building
 
-1. **IK dead zone** (elbow limit ±2.0 rad ⇒ targets within ~0.30 m of the shoulder unreachable) — mapped, then workspace restricted; later approach waypoints rejected objects at r < ~0.29 m, so pick region and bins were moved outward and approach/grasp heights lowered (0.08/0.02 → 0.05/0.01).
+1. **IK dead zone** (elbow limit ±2.0 rad ⇒ targets within ~0.30 m of the shoulder unreachable) - mapped, then workspace restricted; later approach waypoints rejected objects at r < ~0.29 m, so pick region and bins were moved outward and approach/grasp heights lowered (0.08/0.02 → 0.05/0.01).
 2. **Floor penetration:** planning the wrist (not fingertips) put fingers 9 cm below the target → fingertip-based planning (`TOOL_LENGTH = 0.09`).
 3. **Rolling objects:** no rolling friction in PyBullet ⇒ released cylinders and spheres rolled out of bins → rolling friction 0.02, damping, shallow trays, lower release height.
 4. **Grasp teleport:** original weld snapped objects to a fixed offset → weld at the current relative pose.
@@ -370,7 +372,7 @@ Test-suite corrections made during the rework: the ONNX parity test initially fa
 - **Capsule-like OOD:** an unseen object that looks like a known class is mostly accepted.
 - **Detector misses:** 5 of 30 unseen meshes were never detected.
 - **Concurrent-motion blind spot:** vision is paused during motion by design.
-- **Merged silhouettes** stop the arm (conservative) — the demo avoids them by spacing.
+- **Merged silhouettes** stop the arm (conservative) - the demo avoids them by spacing.
 - **Sort failures:** 6 of 80 objects ended outside their tray; one confirmed misclassification, the rest unexplained.
 - **Simulation realism:** weld-based grasp; no real camera noise/lighting; domain gap to the physical IMX219 untested.
 - **SAC** below the 1 cm target (longer training suggested).

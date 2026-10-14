@@ -1,13 +1,13 @@
 # Problems found in the original project, and what was done
 
 Status: **Fixed** = changed and tested on the PC. **Written** = code exists but has not run on the target hardware. **Open** = still a problem.
-(A tarball of the repository before these changes is in the Claude session scratchpad; nothing was ever committed to git.)
+(A tarball of the repository before these changes is in the Claude session scratchpad; the repository is now on GitHub (github.com/RPi-Boy/Automator).)
 
 ## A. Claims that the code did not support
 | # | Problem | Fix | Status |
 |---|---|---|---|
 | 1 | `report.md` claimed clean pick-and-place and a 10.28 ms pipeline. The integration test actually printed **0.0% success, 0.363 m placement RMSE** and only passed because its assertion allowed 0.40 m. | Test replaced by calibration, ONNX-parity, detector-geometry and end-to-end sorting tests. `report.md` rewritten with measured numbers only. | Fixed |
-| 2 | The "latency" figure added up three unrelated timings, including a PyBullet physics step, with random weights and a 224x224 dummy input. | `scripts/benchmark_edge.py` times detection, network and IK/planning on real frames, per backend; run it on the Jetson. | Fixed (Jetson numbers: open) |
+| 2 | The "latency" figure added up three unrelated timings, including a PyBullet physics step, with random weights and a 224x224 dummy input. | `scripts/benchmark_edge.py` times detection, network and IK/planning on real frames, per backend; run it on the Jetson. | Fixed (measured on the Jetson, docs/JETSON_RESULTS.md) |
 | 3 | The E-stop test used the class mean as its "in-distribution" sample (distance exactly 0) and compared an *unbounded* distance to 0.75. | Distance mapped to [0, 1] so 0.75 = 99th percentile of held-out in-distribution data; tested with proper held-out samples. | Fixed |
 
 ## B. Perception
@@ -18,7 +18,7 @@ Status: **Fixed** = changed and tested on the PC. **Written** = code exists but 
 | 6 | Mahalanobis statistics were fitted on features collected *during* training (train-mode BatchNorm, changing weights). | Refit after training in eval mode on clean data; threshold calibrated on a separate validation split. | Fixed |
 | 7 | `compute_mahalanobis_distance` looped in Python per sample and class and called `torch.tensor()` on a list of tensors (breaks autograd/export). | Vectorised einsum, part of the exported graph. | Fixed |
 | 8 | `num_classes=5` with 3 object types; no pretrained weights; no detection (whole frame resized to 224x224). | 4 classes, ImageNet-pretrained MobileNetV3-small, background-subtraction detector + masked 128x128 crops. | Fixed |
-| 9 | TensorRT export enabled FP16 by checking `platform_has_tf32`, wrote a **fake `.engine` file** when TensorRT was missing, and left two outputs without dynamic batch. | Export writes ONNX only (all inputs/outputs dynamic batch); `scripts/build_trt_engine.sh` builds the engine on the Jetson with `trtexec`. The fake engine file was deleted. | Written |
+| 9 | TensorRT export enabled FP16 by checking `platform_has_tf32`, wrote a **fake `.engine` file** when TensorRT was missing, and left two outputs without dynamic batch. | Export writes ONNX only (all inputs/outputs dynamic batch); `scripts/build_trt_engine.sh` builds the engine on the Jetson with `trtexec`. The fake engine file was deleted. | Fixed (FP16 and FP32 engines built and checked on the Jetson) |
 | 10 | Crops included tray edges and neighbouring objects; with trays in view false e-stops rose from 0% to 7.5% in one image region. | Crops are masked to the object; dataset includes trays. | Fixed |
 | 11 | Unseen shapes that look like a known class (a capsule next to the cylinder class) are not flagged. | Measured and reported. Unseen meshes are flagged essentially always. A center-loss variant collapsed and was dropped. | **Open** |
 
@@ -41,7 +41,7 @@ Status: **Fixed** = changed and tested on the PC. **Written** = code exists but 
 | 18 | The vision node's `sys.path` hack pointed at the wrong place from an installed package. | `AUTOMATOR_ROOT` env var or upward search (works with `--symlink-install`). | Written |
 | 19 | The only image source was the real IMX219; nothing showed sim objects. | `sim_bridge_node` renders the sim scene and applies `/joint_commands`. | Written |
 | 19b | A review found the ROS node's defaults did not match what the demo measured: it planned for the wrist (fingers 9 cm through the floor) and its empty bin parameter sent every class to one bin. | One shared `arm_perception/config.py`; the node, demo and tests all build `PickPlaceSequencer()` with no arguments; a test checks fingertip-at-object and class-to-bin. | Fixed |
-| 20 | Dev venv is Python 3.14; Jetson/Humble is Python 3.10. | New node code avoids 3.11+ syntax; compile-checked only on 3.14. | Open (verify on device) |
+| 20 | Dev venv is Python 3.14; Jetson/Humble is Python 3.10. | New node code avoids 3.11+ syntax; compile-checked only on 3.14. | Partly verified (benchmarks and sorting ran on the Jetson's Python 3.10.12; ROS nodes not yet run) |
 
 ## E. ESP32 firmware
 | # | Problem | Fix | Status |

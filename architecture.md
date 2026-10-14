@@ -1,6 +1,6 @@
 # System Architecture
 
-**Project:** Team Avatar Automator - shape-sorting 4-DOF arm, simulated in PyBullet, with perception and control running as ROS 2 nodes on a Jetson Orin Nano and a micro-ROS ESP32 as the actuator/safety controller.
+**Project:** Automator (Team 34) - shape-sorting 4-DOF arm, simulated in PyBullet, with perception and control running as ROS 2 nodes on a Jetson Orin Nano and a micro-ROS ESP32 as the actuator/safety controller.
 **Status:** simulation is the product; the Jetson and ESP32 prove the edge pipeline. The perception/planning path is measured on a Jetson Orin Nano Super (section 6); ROS-under-ROS, the ESP32 and the arm are *(unverified)*.
 
 ## 1. Data flow

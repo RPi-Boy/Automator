@@ -2,6 +2,7 @@
 
   python3 scripts/jetson_selfcheck.py            # run from the repository root
 Prints PASS / WARN / FAIL per item. FAIL = the demo will not work; WARN = works but degraded.
+  --skip-ros   report the ROS 2 items as WARN instead of FAIL (perception benchmarks and the sorting demo do not need ROS)
 """
 import glob
 import importlib
@@ -16,6 +17,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "ros2_ws", "src", "arm_perception"))
 LINES, FAILS = [], 0
+SKIP_ROS = "--skip-ros" in sys.argv
 
 
 def report(level, name, detail=""):
@@ -66,10 +68,10 @@ def main():
 
     # ROS
     ros = shutil.which("ros2")
-    report("PASS" if ros else "FAIL", "ros2 on PATH", ros or "run: source /opt/ros/humble/setup.bash")
+    report("PASS" if ros else ("WARN" if SKIP_ROS else "FAIL"), "ros2 on PATH", ros or "run: source /opt/ros/humble/setup.bash")
     if ros:
         pkg = sh("ros2 pkg prefix arm_perception 2>/dev/null")
-        report("PASS" if pkg else "FAIL", "arm_perception built", pkg or "run colcon build, then source ros2_ws/install/setup.bash")
+        report("PASS" if pkg else ("WARN" if SKIP_ROS else "FAIL"), "arm_perception built", pkg or "run colcon build, then source ros2_ws/install/setup.bash")
         agent = sh("ros2 pkg prefix micro_ros_agent 2>/dev/null")
         report("PASS" if agent else "WARN", "micro_ros_agent installed", agent or "sudo apt install ros-humble-micro-ros-agent (or use docker, see instructions.md)")
     report("PASS" if os.environ.get("AUTOMATOR_ROOT") == ROOT else "WARN", "AUTOMATOR_ROOT", os.environ.get("AUTOMATOR_ROOT", f"unset - run: export AUTOMATOR_ROOT={ROOT}"))

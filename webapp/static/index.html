@@ -118,7 +118,7 @@
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const fmt = (v, d=1) => (v === undefined || v === null || isNaN(v)) ? '–' : Number(v).toFixed(d);
+const fmt = (v, d=1) => (v === undefined || v === null || isNaN(v)) ? '-' : Number(v).toFixed(d);
 async function api(path, opts) {
   const r = await fetch(path, Object.assign({credentials:'same-origin'}, opts || {}));
   const j = await r.json().catch(() => ({}));
@@ -140,12 +140,12 @@ function renderChips() {
 }
 const TILES = [['gpu_pct','GPU','%',0,100,'gpu'],['cpu_pct','CPU','%',0,100,'cpu'],['ram','RAM','',0,0,null],['temp_c','Temp','°C',0,0,'tmp'],['power_w','Power','W',0,0,'pwr']];
 function renderTelemetry(t) {
-  if (!$('#tel').children.length) $('#tel').innerHTML = TILES.map(x => `<div class="tile"><div class="k">${x[1]}</div><div class="v" id="t_${x[0]}">–</div><canvas id="s_${x[0]}" width="150" height="26"></canvas></div>`).join('');
+  if (!$('#tel').children.length) $('#tel').innerHTML = TILES.map(x => `<div class="tile"><div class="k">${x[1]}</div><div class="v" id="t_${x[0]}">-</div><canvas id="s_${x[0]}" width="150" height="26"></canvas></div>`).join('');
   const val = {gpu_pct:t.gpu_pct, cpu_pct:t.cpu_pct, temp_c:t.temp_c, power_w:t.power_w, ram: t.ram_total_mb ? t.ram_used_mb/t.ram_total_mb*100 : undefined};
   for (const x of TILES) {
     const v = val[x[0]], el = $('#t_'+x[0]);
-    if (x[0] === 'ram') el.innerHTML = t.ram_total_mb ? `${(t.ram_used_mb/1024).toFixed(1)}<small> / ${(t.ram_total_mb/1024).toFixed(1)} GB</small>` : '–';
-    else el.innerHTML = v === undefined ? '–' : `${x[0]==='power_w'||x[0]==='temp_c' ? Number(v).toFixed(1) : Math.round(v)}<small> ${x[2]}</small>`;
+    if (x[0] === 'ram') el.innerHTML = t.ram_total_mb ? `${(t.ram_used_mb/1024).toFixed(1)}<small> / ${(t.ram_total_mb/1024).toFixed(1)} GB</small>` : '-';
+    else el.innerHTML = v === undefined ? '-' : `${x[0]==='power_w'||x[0]==='temp_c' ? Number(v).toFixed(1) : Math.round(v)}<small> ${x[2]}</small>`;
     const key = x[5] || 'ram'; (history[key] = history[key] || []).push(v === undefined ? 0 : v); if (history[key].length > 90) history[key].shift();
     spark($('#s_'+x[0]), history[key], x[0]==='gpu_pct'||x[0]==='cpu_pct' ? 100 : null);
   }
@@ -206,7 +206,7 @@ function drawChart() {
   for (let k = 0; k <= 4; k++) { const y = 6 + (H-bottom-6) * (1-k/4); g.beginPath(); g.moveTo(left,y); g.lineTo(W-4,y); g.stroke(); g.fillText((mx*k/4).toFixed(1), 2, y+4); }
   const line = (key, color) => { g.strokeStyle = color; g.lineWidth = 1.6; g.beginPath(); pts.forEach((p,i) => { const x = left + i/(pts.length-1)*(W-left-4), y = 6 + (H-bottom-6)*(1-p[key]/mx); i?g.lineTo(x,y):g.moveTo(x,y); }); g.stroke(); };
   line('detect', '#f5a623'); line('network', '#3ecf8e'); line('total', '#4ea1ff');
-  g.fillStyle = '#8b98a9'; g.fillText('ms per frame — last ' + pts.length + ' samples', left, H-3);
+  g.fillStyle = '#8b98a9'; g.fillText('ms per frame - last ' + pts.length + ' samples', left, H-3);
 }
 function renderStats() {
   const t = st.iters.map(p => p.total);
