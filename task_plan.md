@@ -68,6 +68,20 @@
 - [x] End-to-end sort-by-shape demo with one bin per shape (`scripts/sort_demo.py`)
 - [x] `sim_bridge_node.py` so the Jetson pipeline runs against the sim over ROS topics
 - [x] SAC reach policy trained (`sim/reach_env.py`, `scripts/train_sac_reach.py`) - **1 cm target not met: 16% success after 300k steps**
-- [ ] Build the TensorRT engine and run `scripts/benchmark_edge.py` on the Jetson
+- [x] Build the TensorRT engine and run `scripts/benchmark_edge.py` on the Jetson - **TensorRT FP16 5.9 ms vs 11.3 ms ONNX CPU** (`docs/JETSON_RESULTS.md`)
 - [ ] Compile/flash the ESP32 sketch, calibrate `steps_per_rad`, wire the hardware e-stop
 - [ ] Capsule-class OOD detection (see report.md)
+
+## Phase 10: Jetson Bring-up, Dashboard and Edge Measurements
+- [x] Jetson install script covering the real pitfalls (NumPy 2 vs OpenCV, missing TensorRT/CUDA/DLA libraries, ffmpeg) - `scripts/jetson_install.sh`
+- [x] Self-check, micro-ROS agent and demo launchers - `scripts/jetson_selfcheck.py`, `start_microros_agent.sh`, `run_jetson_demo.sh`
+- [x] TensorRT 10 backend that needs no PyTorch (`cuda-python`) - `perception/inference.py`
+- [x] ROS viewer window, annotated perception view, spectator view, one-command launch file - `sim_viewer_node.py`, `overlay.py`, `launch/sort_demo.launch.py`
+- [x] ESP32 `/esp32/status` heartbeat so the USB micro-ROS link can be checked without motors
+- [x] Web dashboard on the Jetson with live latency chart, live frame, telemetry and video/result downloads - `webapp/`, `scripts/start_dashboard.sh`
+- [x] Measured on the Jetson: latency per backend, trtexec GPU time, 60 s sustained runs with power/temperature, 12/12 sorting run with videos
+- [x] Instructions for juniors (`instructions.md`)
+- [ ] Run the ROS 2 nodes and `sort_demo.launch.py` under a live ROS 2 on the Jetson
+- [ ] Compile and flash the ESP32 sketch; check `/esp32/status` and the command rate over the USB link
+- [ ] Longer thermal soak and 15 W / 25 W comparison for the TensorRT path
+- [ ] Make the dashboard start at boot (systemd) if it is to stay up

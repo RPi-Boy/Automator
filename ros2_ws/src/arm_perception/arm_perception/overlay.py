@@ -21,7 +21,10 @@ def draw_detections(rgb, results, threshold=0.75, timing_ms=None):
         cv2.rectangle(out, (x, top), (x + tw + 6, top + th + 6), color, -1)
         cv2.putText(out, label, (x + 3, top + th + 1), cv2.FONT_HERSHEY_SIMPLEX, 0.5, WHITE, 1, cv2.LINE_AA)
     if timing_ms is not None:
-        cv2.putText(out, f'perception {timing_ms:.1f} ms', (8, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, WHITE, 2, cv2.LINE_AA)
+        text = f'perception {timing_ms:.1f} ms'
+        (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+        cv2.rectangle(out, (4, 4), (tw + 16, th + 16), GRAY, -1)       # dark plate: readable on any background
+        cv2.putText(out, text, (10, th + 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, WHITE, 2, cv2.LINE_AA)
     return out
 
 

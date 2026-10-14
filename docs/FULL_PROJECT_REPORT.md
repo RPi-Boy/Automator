@@ -3,7 +3,7 @@
 **Project:** Shape-sorting 4-DOF robotic arm, simulated in PyBullet, with the perception/control stack designed to run on a Jetson Orin Nano (ROS 2 Humble, TensorRT) and an ESP32 (micro-ROS) actuator/safety controller.
 **Developer:** Siddhant Kumar (VIT Vellore). **Report scope:** the original project state, every experiment run during the rework, and the final results.
 
-**How to read the numbers.** Every figure marked *measured* was produced by scripts in this repository on the development PC (Arch Linux, Intel i7-1360P, 16 threads, **CPU only**, Python 3.14) and is stored in `models/*.json`. Figures from earlier iterations are labelled *superseded* and are kept because they show what each change fixed. Figures quoted from the original `report.md` are labelled *original claim*. **Nothing was measured on the Jetson Orin Nano or the ESP32.** Items that were written but never run on target hardware are marked *unverified*.
+**How to read the numbers.** Every figure marked *measured* was produced by scripts in this repository, on one of two machines: the development PC (Arch Linux, Intel i7-1360P, 16 threads, **CPU only**, Python 3.14) or the **Jetson Orin Nano Super** (JetPack 6 / L4T R36.5, TensorRT 10.3, Python 3.10), as labelled. PC results are stored in `models/*.json`; Jetson results in `docs/jetson_results/` and `docs/JETSON_RESULTS.md`. Figures from earlier iterations are labelled *superseded* and are kept because they show what each change fixed. Figures quoted from the original `report.md` are labelled *original claim*. **The ROS 2 nodes and the ESP32 have not been run** (the arm is not built; only the simulation ran on the Jetson). Items written but never run on target hardware are marked *unverified*.
 
 ---
 
@@ -41,8 +41,11 @@
 | OOD false-positive rate at 95 % in-dist acceptance | **15.6 %** (target ≤ 10 %: **not met**) |
 | SAC reach, 1 cm success radius | **16 %** success, 18.4 mm mean final error (**not met**) |
 | Perception→plan latency, PC CPU (ONNX Runtime) | **12.0 ms** mean, 17.5 ms p95 |
-| Automated tests | **18 / 18 pass** |
-| Jetson / TensorRT / ESP32 / ROS-live | **not run** |
+| Perception→plan latency, **Jetson Orin Nano Super** | **5.9 ms** TensorRT FP16 (p95 6.2 ms), 6.2 ms FP32, 11.3 ms ONNX Runtime CPU; GPU compute alone 0.89 ms |
+| Jetson sustained run (60 s at 30 Hz) | TensorRT FP16: 6.0 ms, no drift, 7 % CPU, 7.0 W; CPU path: 10.2 ms, 44 % CPU, 8.5 W |
+| Sorting run on the Jetson (TensorRT FP16) | **12 / 12** objects, 3 H.264 videos |
+| Automated tests | **21 / 21 pass** |
+| ROS 2 nodes under live ROS / ESP32 / micro-ROS link | **not run** |
 
 Headline lessons: the original model was trained on random-noise images and its reported results were not supported by its own tests; after rebuilding the data pipeline, the detector, the model calibration and the control stack, simulated sorting works at 92.5 %, arbitrary unseen objects are almost always caught, and the main remaining weakness is an unseen object that resembles a known class.
 
@@ -67,7 +70,7 @@ Headline lessons: the original model was trained on random-noise images and its 
 - `scripts/train_rl_agent.py` used `EvalCallback` without importing it (NameError once stable-baselines3 was present).
 - URDF elbow limit ±2.0 rad makes any target within ~0.30 m of the shoulder unreachable, yet objects spawned at r = 0.20–0.35 m.
 
-A full 31-item list with fixes is in `docs/PROBLEMS_AND_FIXES.md`.
+A full 40-item list with fixes is in `docs/PROBLEMS_AND_FIXES.md`.
 
 ---
 
@@ -271,18 +274,37 @@ ONNX Runtime CPU, 4 threads, 200 iterations, real sim frames with 3 objects; mea
 
 (*Original claim*, superseded: 10.28 ms total, built from a random-weight model on a dummy 224×224 input, a planner timing and a physics step.)
 
-### 10.3 Jetson status
-No TensorRT engine has been built. `scripts/build_trt_engine.sh fp16` (trtexec, dynamic batch 1–8) must run on the Jetson, followed by `scripts/benchmark_edge.py --model models/perception_fp16.engine --tag jetson_fp16`. The TensorRT backend supports TensorRT 10 (JetPack 6.1+) and 8.x but is untested; ONNX Runtime is the fallback. The original report's projected "≈ 1.2 ms INT8" figure is not supported by any measurement.
+### 10.3 Jetson Orin Nano Super (*measured* on the device; `docs/JETSON_RESULTS.md`)
+Jetson Orin Nano Engineering Reference Developer Kit Super, JetPack 6 (L4T R36.5), 6 cores, 7.4 GB, TensorRT 10.3.0, ONNX Runtime 1.23.2 (CPU only), power mode MAXN_SUPER with `jetson_clocks` unless stated.
+Per frame, 3 objects, 500 iterations each, run through the web dashboard:
+
+| Backend | Detect | Network | Plan | **Total mean** | p95 | max |
+|---|---|---|---|---|---|---|
+| ONNX Runtime, CPU | 4.14 ms | 5.94 | 1.17 | **11.25 ms** | 13.84 | 27.61 |
+| TensorRT FP32 | 3.04 | 2.04 | 1.08 | **6.16 ms** | 6.48 | 6.80 |
+| **TensorRT FP16** | 3.00 | 1.84 | 1.07 | **5.91 ms** | 6.20 | 6.83 |
+
+- TensorRT cuts the network step 3.2x and the whole path 1.9x, and removes CPU jitter (worst case 27.6 ms to 6.8 ms). FP16 outputs match the FP32 CPU model within 0.005 in the logits with identical classes.
+- `trtexec` GPU compute (batch 3): FP16 **0.892 ms** (1117 qps), FP32 1.096 ms (910 qps); batch 1: 0.780 / 0.919 ms. The network step in the pipeline is about twice the GPU time (host-device copies, Python).
+- Power mode: in the original 25 W mode the CPU path took **14.02 ms** (p95 14.93) vs 11.0 ms in MAXN_SUPER.
+- Sustained, 60 s at 30 Hz (about 1,800 frames): TensorRT FP16 total 6.03 ms (p95 6.31, max 6.72, first half 6.01 vs second half 6.04), GPU 2 %, CPU 7 %, **7.0 W** avg (7.7 max), 48 C; ONNX CPU 10.17 ms (p95 10.63, max 17.84), CPU 44 %, 8.5 W, 47 to 49 C. No throttling in 60 s; a longer soak was not run.
+- Engine build on the Jetson: FP16 195 s, FP32 85 s.
+- Sorting run with TensorRT FP16, 3 trials x 4 objects (seeds 1000-1002): **12 / 12** sorted, 0 e-stops, 3 videos (about 650 kB each, H.264). It took 711 s of wall time because the simulator is CPU-bound on the Jetson (simulated camera render 270-350 ms/frame); perception inside the run was about 5.6 ms (detect 3.3 + network 2.36).
+- The original report's projected "about 1.2 ms INT8" figure was never measured and is not supported.
+- Setup findings (all fixed in `scripts/jetson_install.sh`, see `docs/PROBLEMS_AND_FIXES.md` G): NumPy 2 breaks the apt OpenCV; a fresh image has no TensorRT/CUDA and needs the DLA libraries plus `ldconfig`; no CUDA PyTorch on the board, so the TensorRT backend uses `cuda-python`; `ffmpeg` is needed for browser-playable video.
 
 ---
 
-## 11. Firmware, ROS 2 and Jetson status (all *unverified*)
+## 11. Firmware, ROS 2 and tooling status (ROS and ESP32 *unverified*)
 
 | Component | State |
 |---|---|
 | `joint_trajectory_node` | written; logic (sequencer) unit-tested; node not run under ROS |
 | `evidential_vision_node` | rewritten (TensorRT/ONNX/torch backends, rgb8/bgr8 + stride handling, batching, rate limit, `/arm_busy` pause); not run under ROS |
-| `sim_bridge_node` | written (PyBullet camera → ROS, `/joint_commands` → arm, respawn, `inject_unknown`); not run |
+| `sim_bridge_node` | written (PyBullet camera → ROS, `/joint_commands` → arm, respawn, `inject_unknown`, `/sim/spectator`, optional PyBullet GUI); not run |
+| `sim_viewer_node`, `overlay.py`, `launch/sort_demo.launch.py` | viewer window (simulation \| annotated perception, status bar, `e`/`r` keys, optional mp4), one-command launch; overlay helpers unit-tested, nodes not run under ROS |
+| Edge-test dashboard (`webapp/`, `scripts/start_dashboard.sh`) | **run on the Jetson**: all job types exercised (self-check, benchmarks, live latency, trtexec, sorting with video), downloads, zip, range requests, token auth and path-traversal / injection checks |
+| `/esp32/status` heartbeat in the sketch | written, **not compiled**: bit flags for e-stop, motors, fresh command, hardware line, plus a received-command counter |
 | ROS packaging | `resource/` marker and `setup.cfg` added, `AUTOMATOR_ROOT` path resolution; needs `colcon build` on the Jetson |
 | ESP32 sketch (`firmware/esp32_microros/esp32_actuator/`, Arduino IDE + micro_ros_arduino) | written, **not compiled**; micro-ROS in a core-0 task, AccelStepper on core 1; real GPIO33 interrupt e-stop; 200 ms watchdog (signed-difference race fixed); latched e-stop with reset topic; no `Serial` prints; GPIO12 avoided |
 | Stepper calibration | `steps_per_rad` are **placeholders** (assumed gear ratios); must be measured before powering the arm |
@@ -292,7 +314,7 @@ A PlatformIO build was attempted early (the micro-ROS library builder failed on 
 
 ---
 
-## 12. Test suite (*measured*: 18 tests, all pass)
+## 12. Test suite (*measured*: 21 tests, all pass)
 
 | File | Tests | Covers |
 |---|---|---|
@@ -300,6 +322,7 @@ A PlatformIO build was attempted early (the micro-ROS library builder failed on 
 | `test_trajectory.py` | 7 | joint limits and velocity limits respected, path returns home; gripper closes at the pick and opens at the bin; fingertips stay above the floor; high uncertainty halts and blocks until cleared; unreachable/busy rejection; halt freezes the setpoint; **node-default sequencer** (fingertip within 2 mm of object, each class released over its own bin, unknown class does not mutate another bin) |
 | `test_perception.py` | 2 | forward shapes; fit + predict with uncertainty |
 | `test_integration.py` | 4 (+) | calibration (≈ 1 % in-dist above 0.75, far OOD above it, bounded ≤ 1); ONNX parity at batch 3 vs batch-1 export; detector back-projection (< 6 mm with true height, < 12 mm with assumed height); end-to-end 3-trial sort (≥ 7 / 9 required; measured 8 / 9) |
+| `test_overlay.py` | 3 | ESP32 status bit decoding, detection overlay drawing, viewer composition with missing images |
 | `test_sim.py` | 2 | legacy environment |
 
 Test-suite corrections made during the rework: the ONNX parity test initially failed because a random-initialised network on noise outputs near-constant values and because `torch.onnx.export` restores the wrapper's training flag (flipping BatchNorm back to training mode); verified separately that the real exported model matches PyTorch to ~1e-6 at batch 16 (max abs diff: logits 1.4e-6, offset 1.9e-8, uncertainty 2.7e-6; argmax identical).
@@ -336,12 +359,14 @@ Test-suite corrections made during the rework: the ONNX parity test initially fa
 | Sort objects by shape in simulation | 92.5 % over 80 objects | yes |
 | Unknown object triggers e-stop | 25 / 30 trials | partially (5 detector misses) |
 | Phase 5 implemented (trajectory node, stepper driver, ESP32 coupling) | written | yes (unverified on hardware) |
-| Run on Jetson / ESP32 | not done | **no** |
+| Perception + sorting on the Jetson | TensorRT FP16 5.9 ms, 12 / 12 sorted | yes |
+| ROS 2 nodes live / ESP32 flashed and linked | not done | **no** |
 
 ---
 
 ## 15. Limitations and open items
-- **Hardware:** TensorRT engine, ROS nodes under live ROS 2, ESP32 compile/flash, stepper calibration, hardware e-stop wiring, brakes/holding torque.
+- **Hardware:** ROS nodes under live ROS 2, ESP32 compile/flash and micro-ROS link, stepper calibration, hardware e-stop wiring, brakes/holding torque.
+- **Jetson tests are short and single-board:** 60 s sustained runs, one power mode for TensorRT, one board; the simulator itself is far slower than real time on the Jetson CPU.
 - **Capsule-like OOD:** an unseen object that looks like a known class is mostly accepted.
 - **Detector misses:** 5 of 30 unseen meshes were never detected.
 - **Concurrent-motion blind spot:** vision is paused during motion by design.
@@ -366,14 +391,18 @@ Test-suite corrections made during the rework: the ONNX parity test initially fa
 .venv/bin/python scripts/train_sac_reach.py --timesteps 300000 --out models/sac_reach
 .venv/bin/python scripts/benchmark_edge.py --model models/perception.onnx --tag dev_pc_onnx_cpu
 .venv/bin/python -m unittest discover tests
+# on the Jetson: scripts/jetson_install.sh; scripts/build_trt_engine.sh fp16; scripts/start_dashboard.sh (browser) or
+#   python3 scripts/benchmark_edge.py --model models/perception_fp16.engine --tag jetson_trt_fp16
 ```
 
 | Path | Purpose |
 |---|---|
 | `perception/` | `detector.py`, `camera.py`, `mobilenet_uncertainty.py`, `inference.py` (TensorRT/ONNX/torch), `targeting.py` |
 | `sim/` | `scene.py`, `sim_arm.py`, `reach_env.py`, URDF; legacy `arm_env.py`, `trajectory_planner.py` |
-| `ros2_ws/src/arm_perception/arm_perception/` | `config.py`, `kinematics.py`, `trajectory.py`, `joint_trajectory_node.py`, `evidential_vision_node.py`, `sim_bridge_node.py`, `imx219_camera_node.py` |
+| `ros2_ws/src/arm_perception/arm_perception/` | `config.py`, `kinematics.py`, `trajectory.py`, `joint_trajectory_node.py`, `evidential_vision_node.py`, `sim_bridge_node.py`, `sim_viewer_node.py`, `overlay.py`, `launch/sort_demo.launch.py`, `imx219_camera_node.py` |
+| `webapp/` | edge-test dashboard (`server.py`, `static/index.html`) |
+| `scripts/` | dataset, training, sort demo, SAC, benchmark, TensorRT build, `jetson_install.sh`, `jetson_selfcheck.py`, `start_dashboard.sh`, `run_jetson_demo.sh`, `start_microros_agent.sh` |
 | `firmware/esp32_microros/esp32_actuator/` | Arduino sketch, `pins.h`, `stepper_driver.{h,cpp}`; README with wiring and safety |
 | `models/` | `perception.{pt,onnx}`, `perception_metrics.json`, `sort_results.json`, `sort_unknown_results.json`, `benchmark_dev_pc_onnx_cpu.json`, `sac_reach/`, `sort_demo.mp4` |
-| `docs/` | `PROBLEMS_AND_FIXES.md` (31 items), this report |
+| `docs/` | `PROBLEMS_AND_FIXES.md` (40 items), `JETSON_RESULTS.md` + `jetson_results/` (Jetson measurements), this report |
 | `report.md`, `architecture.md`, `README.md`, `task_plan.md` | concise report, design, usage, task log |

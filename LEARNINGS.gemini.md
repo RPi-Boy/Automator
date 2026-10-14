@@ -1,3 +1,5 @@
+> **Historical notes.** Written early in the project (Gemini-generated); several details are superseded (e.g. the 14-d SAC state, the Cornell dataset, a pick-and-place SAC task, the <1 ms ISR claim). Current design: `architecture.md`; measured results: `report.md`, `docs/FULL_PROJECT_REPORT.md`, `docs/JETSON_RESULTS.md`.
+
 # Learning Log & Technical Notes (`LEARNINGS.gemini.md`)
 
 ## 1. Reinforcement Learning for 4-DOF Grasping Pipeline

@@ -42,52 +42,65 @@ class TorchBackend:
 
 
 class TensorRTBackend:
-    """Runs a serialized engine with torch CUDA tensors as device buffers (needs NVIDIA's CUDA-enabled PyTorch
-    wheel on the Jetson, no pycuda). Supports the TensorRT 10 tensor API (JetPack 6.1+) and the older 8.x binding
-    API. UNTESTED off-device - check `python3 -c "import tensorrt; print(tensorrt.__version__)"`, and fall back
-    to the .onnx file (ONNX Runtime) if this misbehaves."""
+    """Runs a serialized TensorRT 10 engine (JetPack 6) through the CUDA runtime from `cuda-python`.
+    Needs only `tensorrt` (apt: python3-libnvinfer) and `pip3 install --user "cuda-python>=12.6,<13"`; no PyTorch.
+    Device buffers are allocated once for up to MAX_BATCH crops."""
 
-    OUTPUTS = ("logits", "offset", "uncertainty")
+    OUTPUTS = (("logits", 4), ("offset", 3), ("uncertainty", 1))
+    MAX_BATCH = 8
 
     def __init__(self, path):
         import tensorrt as trt
-        import torch
-        self.trt, self.torch = trt, torch
+        try:
+            from cuda.bindings import runtime as cudart
+        except ImportError:
+            from cuda import cudart
+        self.cudart = cudart
         logger = trt.Logger(trt.Logger.WARNING)
         with open(path, "rb") as f:
             self.engine = trt.Runtime(logger).deserialize_cuda_engine(f.read())
+        if not hasattr(self.engine, "num_io_tensors"):
+            raise RuntimeError("TensorRT 10 API required (JetPack 6). Use the .onnx file on older versions.")
         self.context = self.engine.create_execution_context()
-        self.v10 = hasattr(self.engine, "num_io_tensors")
-        self.name = f"tensorrt {trt.__version__}"
+        self.name = f"tensorrt {trt.__version__} (cuda-python)"
+        self.stream = self._ok(cudart.cudaStreamCreate())
+        nb = self.MAX_BATCH
+        self.d_crop = self._ok(cudart.cudaMalloc(nb * 3 * 128 * 128 * 4))
+        self.d_bbox = self._ok(cudart.cudaMalloc(nb * 4 * 4))
+        self.d_out = {n: self._ok(cudart.cudaMalloc(nb * w * 4)) for n, w in self.OUTPUTS}
+
+    @staticmethod
+    def _ok(result):
+        err, *vals = result
+        if int(err) != 0:
+            raise RuntimeError(f"CUDA error {err}")
+        return vals[0] if vals else None
 
     def __call__(self, crop, bbox):
-        torch = self.torch
-        inputs = {"crop": torch.from_numpy(crop).cuda().contiguous(),
-                  "bbox_feat": torch.from_numpy(bbox).cuda().contiguous()}
-        outputs = {}
-        stream = torch.cuda.current_stream().cuda_stream
-        if self.v10:
-            for name, t in inputs.items():
-                self.context.set_input_shape(name, tuple(t.shape))
-                self.context.set_tensor_address(name, t.data_ptr())
-            for name in self.OUTPUTS:
-                outputs[name] = torch.empty(tuple(self.context.get_tensor_shape(name)), dtype=torch.float32, device="cuda")
-                self.context.set_tensor_address(name, outputs[name].data_ptr())
-            self.context.execute_async_v3(stream)
-        else:
-            eng = self.engine
-            names = [eng.get_binding_name(i) for i in range(eng.num_bindings)]
-            for i, n in enumerate(names):
-                if eng.binding_is_input(i):
-                    self.context.set_binding_shape(i, tuple(inputs[n].shape))
-            for i, n in enumerate(names):
-                if not eng.binding_is_input(i):
-                    outputs[n] = torch.empty(tuple(self.context.get_binding_shape(i)), dtype=torch.float32, device="cuda")
-            ptrs = [inputs[n].data_ptr() if eng.binding_is_input(i) else outputs[n].data_ptr()
-                    for i, n in enumerate(names)]
-            self.context.execute_v2(ptrs)
-        torch.cuda.synchronize()
-        return tuple(outputs[n].cpu().numpy() for n in self.OUTPUTS)
+        cr, B = self.cudart, crop.shape[0]
+        if B > self.MAX_BATCH:
+            raise ValueError(f"batch {B} > {self.MAX_BATCH}")
+        crop = np.ascontiguousarray(crop, dtype=np.float32)
+        bbox = np.ascontiguousarray(bbox, dtype=np.float32)
+        h2d = cr.cudaMemcpyKind.cudaMemcpyHostToDevice
+        d2h = cr.cudaMemcpyKind.cudaMemcpyDeviceToHost
+        self._ok(cr.cudaMemcpyAsync(self.d_crop, crop.ctypes.data, crop.nbytes, h2d, self.stream))
+        self._ok(cr.cudaMemcpyAsync(self.d_bbox, bbox.ctypes.data, bbox.nbytes, h2d, self.stream))
+        self.context.set_input_shape("crop", tuple(crop.shape))
+        self.context.set_input_shape("bbox_feat", tuple(bbox.shape))
+        self.context.set_tensor_address("crop", int(self.d_crop))
+        self.context.set_tensor_address("bbox_feat", int(self.d_bbox))
+        for n, _ in self.OUTPUTS:
+            self.context.set_tensor_address(n, int(self.d_out[n]))
+        if not self.context.execute_async_v3(int(self.stream)):
+            raise RuntimeError("TensorRT execute_async_v3 failed")
+        outs = []
+        for n, w in self.OUTPUTS:
+            host = np.empty((B, w), dtype=np.float32)
+            self._ok(cr.cudaMemcpyAsync(host.ctypes.data, self.d_out[n], host.nbytes, d2h, self.stream))
+            outs.append(host.reshape(B) if n == "uncertainty" else host)
+        self._ok(cr.cudaStreamSynchronize(self.stream))
+        return tuple(outs)
 
 
 def load_backend(path):

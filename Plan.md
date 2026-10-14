@@ -1,3 +1,5 @@
+> **Original plan (historical).** The project has moved on: it is now a shape-sorting simulation with an edge pipeline on a Jetson. See `README.md`, `architecture.md` and `task_plan.md` for the current state.
+
 # Project: End-to-End Perception & RL Grasping Pipeline
 **Developer:** Siddhant Kumar (Sidd)
 **Hardware:** Jetson Orin Nano, ESP32, 4-DOF Robotic Arm, IMX219 Camera

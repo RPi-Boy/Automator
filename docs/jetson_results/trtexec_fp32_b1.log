@@ -1,0 +1,424 @@
+&&&& RUNNING TensorRT.trtexec [TensorRT v100300] # /usr/src/tensorrt/bin/trtexec --loadEngine=models/perception_fp32.engine --shapes=crop:1x3x128x128,bbox_feat:1x4 --iterations=200 --warmUp=500
+[10/13/2026-21:48:11] [I] === Model Options ===
+[10/13/2026-21:48:11] [I] Format: *
+[10/13/2026-21:48:11] [I] Model: 
+[10/13/2026-21:48:11] [I] Output:
+[10/13/2026-21:48:11] [I] 
+[10/13/2026-21:48:11] [I] === System Options ===
+[10/13/2026-21:48:11] [I] Device: 0
+[10/13/2026-21:48:11] [I] DLACore: 
+[10/13/2026-21:48:11] [I] Plugins:
+[10/13/2026-21:48:11] [I] setPluginsToSerialize:
+[10/13/2026-21:48:11] [I] dynamicPlugins:
+[10/13/2026-21:48:11] [I] ignoreParsedPluginLibs: 0
+[10/13/2026-21:48:11] [I] 
+[10/13/2026-21:48:11] [I] === Inference Options ===
+[10/13/2026-21:48:11] [I] Batch: Explicit
+[10/13/2026-21:48:11] [I] Input inference shape : bbox_feat=1x4
+[10/13/2026-21:48:11] [I] Input inference shape : crop=1x3x128x128
+[10/13/2026-21:48:11] [I] Iterations: 200
+[10/13/2026-21:48:11] [I] Duration: 3s (+ 500ms warm up)
+[10/13/2026-21:48:11] [I] Sleep time: 0ms
+[10/13/2026-21:48:11] [I] Idle time: 0ms
+[10/13/2026-21:48:11] [I] Inference Streams: 1
+[10/13/2026-21:48:11] [I] ExposeDMA: Disabled
+[10/13/2026-21:48:11] [I] Data transfers: Enabled
+[10/13/2026-21:48:11] [I] Spin-wait: Disabled
+[10/13/2026-21:48:11] [I] Multithreading: Disabled
+[10/13/2026-21:48:11] [I] CUDA Graph: Disabled
+[10/13/2026-21:48:11] [I] Separate profiling: Disabled
+[10/13/2026-21:48:11] [I] Time Deserialize: Disabled
+[10/13/2026-21:48:11] [I] Time Refit: Disabled
+[10/13/2026-21:48:11] [I] NVTX verbosity: 0
+[10/13/2026-21:48:11] [I] Persistent Cache Ratio: 0
+[10/13/2026-21:48:11] [I] Optimization Profile Index: 0
+[10/13/2026-21:48:11] [I] Weight Streaming Budget: 100.000000%
+[10/13/2026-21:48:11] [I] Inputs:
+[10/13/2026-21:48:11] [I] Debug Tensor Save Destinations:
+[10/13/2026-21:48:11] [I] === Reporting Options ===
+[10/13/2026-21:48:11] [I] Verbose: Disabled
+[10/13/2026-21:48:11] [I] Averages: 10 inferences
+[10/13/2026-21:48:11] [I] Percentiles: 90,95,99
+[10/13/2026-21:48:11] [I] Dump refittable layers:Disabled
+[10/13/2026-21:48:11] [I] Dump output: Disabled
+[10/13/2026-21:48:11] [I] Profile: Disabled
+[10/13/2026-21:48:11] [I] Export timing to JSON file: 
+[10/13/2026-21:48:11] [I] Export output to JSON file: 
+[10/13/2026-21:48:11] [I] Export profile to JSON file: 
+[10/13/2026-21:48:11] [I] 
+[10/13/2026-21:48:11] [I] === Device Information ===
+[10/13/2026-21:48:11] [I] Available Devices: 
+[10/13/2026-21:48:11] [I]   Device 0: "Orin" UUID: GPU-c6de48fe-f525-57d5-9c2b-066f57e2ba24
+[10/13/2026-21:48:11] [I] Selected Device: Orin
+[10/13/2026-21:48:11] [I] Selected Device ID: 0
+[10/13/2026-21:48:11] [I] Selected Device UUID: GPU-c6de48fe-f525-57d5-9c2b-066f57e2ba24
+[10/13/2026-21:48:11] [I] Compute Capability: 8.7
+[10/13/2026-21:48:11] [I] SMs: 8
+[10/13/2026-21:48:11] [I] Device Global Memory: 7607 MiB
+[10/13/2026-21:48:11] [I] Shared Memory per SM: 164 KiB
+[10/13/2026-21:48:11] [I] Memory Bus Width: 128 bits (ECC disabled)
+[10/13/2026-21:48:11] [I] Application Compute Clock Rate: 1.02 GHz
+[10/13/2026-21:48:11] [I] Application Memory Clock Rate: 1.02 GHz
+[10/13/2026-21:48:11] [I] 
+[10/13/2026-21:48:11] [I] Note: The application clock rates do not reflect the actual clock rates that the GPU is currently running at.
+[10/13/2026-21:48:11] [I] 
+[10/13/2026-21:48:11] [I] TensorRT version: 10.3.0
+[10/13/2026-21:48:11] [I] Loading standard plugins
+[10/13/2026-21:48:11] [I] [TRT] Loaded engine size: 5 MiB
+[10/13/2026-21:48:11] [I] Engine deserialized in 0.034226 sec.
+[10/13/2026-21:48:11] [I] [TRT] [MemUsageChange] TensorRT-managed allocation in IExecutionContext creation: CPU +0, GPU +7, now: CPU 0, GPU 10 (MiB)
+[10/13/2026-21:48:11] [I] Setting persistentCacheLimit to 0 bytes.
+[10/13/2026-21:48:11] [I] Set shape of input tensor crop to: 1x3x128x128
+[10/13/2026-21:48:11] [I] Set shape of input tensor bbox_feat to: 1x4
+[10/13/2026-21:48:11] [I] Created execution context with device memory size: 6.41455 MiB
+[10/13/2026-21:48:11] [I] Using random values for input crop
+[10/13/2026-21:48:11] [I] Input binding for crop with dimensions 1x3x128x128 is created.
+[10/13/2026-21:48:11] [I] Using random values for input bbox_feat
+[10/13/2026-21:48:11] [I] Input binding for bbox_feat with dimensions 1x4 is created.
+[10/13/2026-21:48:11] [I] Output binding for logits with dimensions 1x4 is created.
+[10/13/2026-21:48:11] [I] Output binding for offset with dimensions 1x3 is created.
+[10/13/2026-21:48:11] [I] Output binding for uncertainty with dimensions 1 is created.
+[10/13/2026-21:48:11] [I] Starting inference
+[10/13/2026-21:48:15] [I] Warmup completed 537 queries over 500 ms
+[10/13/2026-21:48:15] [I] Timing trace has 3258 queries over 3.00278 s
+[10/13/2026-21:48:15] [I] 
+[10/13/2026-21:48:15] [I] === Trace details ===
+[10/13/2026-21:48:15] [I] Trace averages of 10 runs:
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918985 ms - Host latency: 0.950467 ms (enqueue 0.613248 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917401 ms - Host latency: 0.949707 ms (enqueue 0.60907 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918225 ms - Host latency: 0.949304 ms (enqueue 0.610803 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918213 ms - Host latency: 0.94801 ms (enqueue 0.609076 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918207 ms - Host latency: 0.948804 ms (enqueue 0.612433 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918805 ms - Host latency: 0.948962 ms (enqueue 0.608521 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918665 ms - Host latency: 0.950934 ms (enqueue 0.613519 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918512 ms - Host latency: 0.949878 ms (enqueue 0.611591 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919043 ms - Host latency: 0.95025 ms (enqueue 0.612952 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918835 ms - Host latency: 0.949152 ms (enqueue 0.608502 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919629 ms - Host latency: 0.952277 ms (enqueue 0.609216 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918164 ms - Host latency: 0.950885 ms (enqueue 0.612579 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917682 ms - Host latency: 0.950128 ms (enqueue 0.610645 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917621 ms - Host latency: 0.949677 ms (enqueue 0.612531 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917853 ms - Host latency: 0.94884 ms (enqueue 0.610852 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919849 ms - Host latency: 0.950873 ms (enqueue 0.608649 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917767 ms - Host latency: 0.948169 ms (enqueue 0.607721 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91814 ms - Host latency: 0.948468 ms (enqueue 0.610852 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919678 ms - Host latency: 0.950891 ms (enqueue 0.60802 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917975 ms - Host latency: 0.947803 ms (enqueue 0.615631 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918451 ms - Host latency: 0.951099 ms (enqueue 0.608234 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919751 ms - Host latency: 0.95155 ms (enqueue 0.607813 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919098 ms - Host latency: 0.950384 ms (enqueue 0.610651 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.920471 ms - Host latency: 0.951123 ms (enqueue 0.612128 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919257 ms - Host latency: 0.951556 ms (enqueue 0.610407 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918634 ms - Host latency: 0.949158 ms (enqueue 0.610742 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918433 ms - Host latency: 0.950348 ms (enqueue 0.618365 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917938 ms - Host latency: 0.949323 ms (enqueue 0.615906 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917694 ms - Host latency: 0.949579 ms (enqueue 0.612427 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918207 ms - Host latency: 0.948761 ms (enqueue 0.611792 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918909 ms - Host latency: 0.951343 ms (enqueue 0.613196 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.9177 ms - Host latency: 0.9487 ms (enqueue 0.615906 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918958 ms - Host latency: 0.951758 ms (enqueue 0.615381 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919617 ms - Host latency: 0.949408 ms (enqueue 0.609784 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919428 ms - Host latency: 0.949744 ms (enqueue 0.61145 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918616 ms - Host latency: 0.951056 ms (enqueue 0.612341 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918195 ms - Host latency: 0.948907 ms (enqueue 0.611481 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917499 ms - Host latency: 0.949609 ms (enqueue 0.610187 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91886 ms - Host latency: 0.949908 ms (enqueue 0.610602 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91947 ms - Host latency: 0.950275 ms (enqueue 0.615259 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918958 ms - Host latency: 0.949597 ms (enqueue 0.616766 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919275 ms - Host latency: 0.950787 ms (enqueue 0.616699 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919061 ms - Host latency: 0.949884 ms (enqueue 0.616876 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918982 ms - Host latency: 0.949371 ms (enqueue 0.607245 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919012 ms - Host latency: 0.950269 ms (enqueue 0.612646 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917871 ms - Host latency: 0.947687 ms (enqueue 0.608215 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917719 ms - Host latency: 0.947449 ms (enqueue 0.608862 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918475 ms - Host latency: 0.948151 ms (enqueue 0.608984 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918262 ms - Host latency: 0.949902 ms (enqueue 0.60899 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918536 ms - Host latency: 0.949274 ms (enqueue 0.613873 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917285 ms - Host latency: 0.949182 ms (enqueue 0.62077 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918115 ms - Host latency: 0.950085 ms (enqueue 0.614886 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918195 ms - Host latency: 0.951251 ms (enqueue 0.619775 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918347 ms - Host latency: 0.949329 ms (enqueue 0.609937 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918329 ms - Host latency: 0.948712 ms (enqueue 0.611346 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918591 ms - Host latency: 0.949524 ms (enqueue 0.615106 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919 ms - Host latency: 0.949762 ms (enqueue 0.612488 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919995 ms - Host latency: 0.952197 ms (enqueue 0.614941 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918372 ms - Host latency: 0.949829 ms (enqueue 0.614282 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917712 ms - Host latency: 0.948511 ms (enqueue 0.608386 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918738 ms - Host latency: 0.949854 ms (enqueue 0.607483 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917456 ms - Host latency: 0.949109 ms (enqueue 0.611743 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917212 ms - Host latency: 0.94856 ms (enqueue 0.613855 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917346 ms - Host latency: 0.947437 ms (enqueue 0.610327 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918579 ms - Host latency: 0.949768 ms (enqueue 0.6073 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918738 ms - Host latency: 0.951306 ms (enqueue 0.612488 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918713 ms - Host latency: 0.952051 ms (enqueue 0.610364 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919092 ms - Host latency: 0.95155 ms (enqueue 0.612964 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918774 ms - Host latency: 0.949878 ms (enqueue 0.620728 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917761 ms - Host latency: 0.949573 ms (enqueue 0.613464 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919373 ms - Host latency: 0.95072 ms (enqueue 0.60813 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917224 ms - Host latency: 0.948206 ms (enqueue 0.613159 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919043 ms - Host latency: 0.95011 ms (enqueue 0.616553 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917468 ms - Host latency: 0.949805 ms (enqueue 0.61438 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917883 ms - Host latency: 0.949719 ms (enqueue 0.61532 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91698 ms - Host latency: 0.948181 ms (enqueue 0.614917 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919177 ms - Host latency: 0.950403 ms (enqueue 0.611426 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917529 ms - Host latency: 0.948108 ms (enqueue 0.61145 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91864 ms - Host latency: 0.948462 ms (enqueue 0.608765 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918543 ms - Host latency: 0.949207 ms (enqueue 0.607434 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918274 ms - Host latency: 0.949512 ms (enqueue 0.613586 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919128 ms - Host latency: 0.950317 ms (enqueue 0.613342 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918396 ms - Host latency: 0.950037 ms (enqueue 0.613293 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919531 ms - Host latency: 0.952734 ms (enqueue 0.611365 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919519 ms - Host latency: 0.952649 ms (enqueue 0.610327 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918298 ms - Host latency: 0.948535 ms (enqueue 0.612878 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917456 ms - Host latency: 0.948047 ms (enqueue 0.609351 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919299 ms - Host latency: 0.951086 ms (enqueue 0.614001 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918567 ms - Host latency: 0.9505 ms (enqueue 0.619751 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918591 ms - Host latency: 0.949512 ms (enqueue 0.612305 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918396 ms - Host latency: 0.948767 ms (enqueue 0.610474 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918555 ms - Host latency: 0.949341 ms (enqueue 0.615198 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918738 ms - Host latency: 0.948901 ms (enqueue 0.608386 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917249 ms - Host latency: 0.948535 ms (enqueue 0.611987 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918481 ms - Host latency: 0.949158 ms (enqueue 0.613708 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919446 ms - Host latency: 0.95061 ms (enqueue 0.617761 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917188 ms - Host latency: 0.946265 ms (enqueue 0.613965 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917773 ms - Host latency: 0.949756 ms (enqueue 0.6104 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917749 ms - Host latency: 0.949805 ms (enqueue 0.613806 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917419 ms - Host latency: 0.948401 ms (enqueue 0.610315 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917712 ms - Host latency: 0.949707 ms (enqueue 0.612707 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919238 ms - Host latency: 0.950293 ms (enqueue 0.609778 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919019 ms - Host latency: 0.949023 ms (enqueue 0.613037 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917688 ms - Host latency: 0.947656 ms (enqueue 0.614001 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918286 ms - Host latency: 0.948962 ms (enqueue 0.611145 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917895 ms - Host latency: 0.948499 ms (enqueue 0.614099 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918359 ms - Host latency: 0.949011 ms (enqueue 0.613538 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919031 ms - Host latency: 0.949695 ms (enqueue 0.608508 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918945 ms - Host latency: 0.950842 ms (enqueue 0.616272 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918384 ms - Host latency: 0.949158 ms (enqueue 0.610193 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918811 ms - Host latency: 0.950586 ms (enqueue 0.615686 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918311 ms - Host latency: 0.949695 ms (enqueue 0.615918 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918555 ms - Host latency: 0.949524 ms (enqueue 0.610388 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918848 ms - Host latency: 0.949878 ms (enqueue 0.615076 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918018 ms - Host latency: 0.947534 ms (enqueue 0.614368 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91853 ms - Host latency: 0.949353 ms (enqueue 0.617578 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917505 ms - Host latency: 0.9474 ms (enqueue 0.608289 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917773 ms - Host latency: 0.948877 ms (enqueue 0.611975 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918872 ms - Host latency: 0.94917 ms (enqueue 0.616553 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918481 ms - Host latency: 0.948914 ms (enqueue 0.609692 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91853 ms - Host latency: 0.95116 ms (enqueue 0.613538 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919275 ms - Host latency: 0.949365 ms (enqueue 0.611743 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917944 ms - Host latency: 0.947937 ms (enqueue 0.607153 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917969 ms - Host latency: 0.949219 ms (enqueue 0.616077 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919861 ms - Host latency: 0.951587 ms (enqueue 0.614771 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919104 ms - Host latency: 0.950098 ms (enqueue 0.614563 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918567 ms - Host latency: 0.949036 ms (enqueue 0.611829 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918018 ms - Host latency: 0.947839 ms (enqueue 0.609509 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918945 ms - Host latency: 0.949194 ms (enqueue 0.614758 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919238 ms - Host latency: 0.949866 ms (enqueue 0.614502 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917676 ms - Host latency: 0.947595 ms (enqueue 0.612744 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918323 ms - Host latency: 0.948352 ms (enqueue 0.613013 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918054 ms - Host latency: 0.948486 ms (enqueue 0.611487 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918494 ms - Host latency: 0.947644 ms (enqueue 0.610437 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918616 ms - Host latency: 0.948877 ms (enqueue 0.613379 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91748 ms - Host latency: 0.948279 ms (enqueue 0.612146 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918799 ms - Host latency: 0.950305 ms (enqueue 0.614392 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919128 ms - Host latency: 0.950159 ms (enqueue 0.617908 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919873 ms - Host latency: 0.950623 ms (enqueue 0.612903 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91875 ms - Host latency: 0.950916 ms (enqueue 0.610632 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917554 ms - Host latency: 0.94834 ms (enqueue 0.611084 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918396 ms - Host latency: 0.949585 ms (enqueue 0.617249 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919067 ms - Host latency: 0.949304 ms (enqueue 0.613708 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.920618 ms - Host latency: 0.954285 ms (enqueue 0.612402 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917761 ms - Host latency: 0.950146 ms (enqueue 0.615271 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919556 ms - Host latency: 0.950195 ms (enqueue 0.615295 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918408 ms - Host latency: 0.947803 ms (enqueue 0.609228 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918079 ms - Host latency: 0.94873 ms (enqueue 0.614661 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919348 ms - Host latency: 0.951074 ms (enqueue 0.620667 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918628 ms - Host latency: 0.948682 ms (enqueue 0.609326 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919421 ms - Host latency: 0.94967 ms (enqueue 0.608459 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918042 ms - Host latency: 0.94939 ms (enqueue 0.614856 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917883 ms - Host latency: 0.947754 ms (enqueue 0.613904 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917371 ms - Host latency: 0.947473 ms (enqueue 0.609314 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918335 ms - Host latency: 0.94884 ms (enqueue 0.616113 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91864 ms - Host latency: 0.950159 ms (enqueue 0.611255 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919153 ms - Host latency: 0.951245 ms (enqueue 0.619885 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919116 ms - Host latency: 0.950427 ms (enqueue 0.615588 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919165 ms - Host latency: 0.949951 ms (enqueue 0.613477 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91864 ms - Host latency: 0.950964 ms (enqueue 0.612891 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91803 ms - Host latency: 0.948218 ms (enqueue 0.610535 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918372 ms - Host latency: 0.948389 ms (enqueue 0.612073 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918237 ms - Host latency: 0.951208 ms (enqueue 0.608899 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919739 ms - Host latency: 0.951819 ms (enqueue 0.609583 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.920166 ms - Host latency: 0.951355 ms (enqueue 0.612097 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918359 ms - Host latency: 0.948499 ms (enqueue 0.610449 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919043 ms - Host latency: 0.949536 ms (enqueue 0.605103 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919006 ms - Host latency: 0.952319 ms (enqueue 0.61438 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919214 ms - Host latency: 0.95033 ms (enqueue 0.608521 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918579 ms - Host latency: 0.949756 ms (enqueue 0.607617 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918677 ms - Host latency: 0.95 ms (enqueue 0.608716 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917456 ms - Host latency: 0.948047 ms (enqueue 0.609155 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.920288 ms - Host latency: 0.951147 ms (enqueue 0.606006 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918799 ms - Host latency: 0.950684 ms (enqueue 0.613501 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918848 ms - Host latency: 0.950122 ms (enqueue 0.612842 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919189 ms - Host latency: 0.951343 ms (enqueue 0.612817 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917798 ms - Host latency: 0.949536 ms (enqueue 0.607983 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917993 ms - Host latency: 0.950195 ms (enqueue 0.613403 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918921 ms - Host latency: 0.951147 ms (enqueue 0.611182 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918848 ms - Host latency: 0.950659 ms (enqueue 0.61499 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918311 ms - Host latency: 0.950024 ms (enqueue 0.61604 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919092 ms - Host latency: 0.951001 ms (enqueue 0.608105 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918066 ms - Host latency: 0.949023 ms (enqueue 0.60979 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919067 ms - Host latency: 0.950757 ms (enqueue 0.613208 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918579 ms - Host latency: 0.950854 ms (enqueue 0.612744 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917895 ms - Host latency: 0.949463 ms (enqueue 0.611377 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919067 ms - Host latency: 0.949243 ms (enqueue 0.605103 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919604 ms - Host latency: 0.951001 ms (enqueue 0.610669 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917993 ms - Host latency: 0.949145 ms (enqueue 0.609741 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91814 ms - Host latency: 0.950024 ms (enqueue 0.612451 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919165 ms - Host latency: 0.950244 ms (enqueue 0.612207 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.920093 ms - Host latency: 0.952563 ms (enqueue 0.60835 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917432 ms - Host latency: 0.948071 ms (enqueue 0.606592 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918628 ms - Host latency: 0.951123 ms (enqueue 0.613135 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917749 ms - Host latency: 0.94895 ms (enqueue 0.612012 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919287 ms - Host latency: 0.951611 ms (enqueue 0.606982 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918701 ms - Host latency: 0.951782 ms (enqueue 0.61394 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918774 ms - Host latency: 0.952124 ms (enqueue 0.612256 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918213 ms - Host latency: 0.949902 ms (enqueue 0.610083 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918262 ms - Host latency: 0.950415 ms (enqueue 0.607104 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918311 ms - Host latency: 0.950049 ms (enqueue 0.611011 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917505 ms - Host latency: 0.949927 ms (enqueue 0.613208 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918677 ms - Host latency: 0.949854 ms (enqueue 0.612695 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918042 ms - Host latency: 0.949902 ms (enqueue 0.615308 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918652 ms - Host latency: 0.950146 ms (enqueue 0.607153 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917627 ms - Host latency: 0.949536 ms (enqueue 0.607617 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918604 ms - Host latency: 0.949951 ms (enqueue 0.610645 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918945 ms - Host latency: 0.950146 ms (enqueue 0.609204 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918018 ms - Host latency: 0.949072 ms (enqueue 0.606421 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91897 ms - Host latency: 0.94917 ms (enqueue 0.609302 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917456 ms - Host latency: 0.951147 ms (enqueue 0.610352 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.916992 ms - Host latency: 0.947656 ms (enqueue 0.605859 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917603 ms - Host latency: 0.948584 ms (enqueue 0.611377 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917603 ms - Host latency: 0.948975 ms (enqueue 0.610254 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918262 ms - Host latency: 0.949292 ms (enqueue 0.608301 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.916455 ms - Host latency: 0.94939 ms (enqueue 0.606982 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917114 ms - Host latency: 0.949585 ms (enqueue 0.615576 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917554 ms - Host latency: 0.950244 ms (enqueue 0.614673 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918701 ms - Host latency: 0.951514 ms (enqueue 0.611035 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918384 ms - Host latency: 0.949316 ms (enqueue 0.61084 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918579 ms - Host latency: 0.952075 ms (enqueue 0.614038 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918335 ms - Host latency: 0.94978 ms (enqueue 0.611719 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918848 ms - Host latency: 0.950757 ms (enqueue 0.607031 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918384 ms - Host latency: 0.949536 ms (enqueue 0.617139 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919702 ms - Host latency: 0.949854 ms (enqueue 0.60415 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91853 ms - Host latency: 0.949194 ms (enqueue 0.613818 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918286 ms - Host latency: 0.950391 ms (enqueue 0.605249 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919214 ms - Host latency: 0.949878 ms (enqueue 0.609106 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918896 ms - Host latency: 0.950049 ms (enqueue 0.60603 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918945 ms - Host latency: 0.951343 ms (enqueue 0.611328 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917798 ms - Host latency: 0.948853 ms (enqueue 0.611743 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918579 ms - Host latency: 0.950269 ms (enqueue 0.613501 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919507 ms - Host latency: 0.951025 ms (enqueue 0.611914 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918286 ms - Host latency: 0.950244 ms (enqueue 0.615796 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917847 ms - Host latency: 0.949365 ms (enqueue 0.612158 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918091 ms - Host latency: 0.950171 ms (enqueue 0.61311 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918335 ms - Host latency: 0.950708 ms (enqueue 0.610645 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919458 ms - Host latency: 0.950977 ms (enqueue 0.607886 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918408 ms - Host latency: 0.950488 ms (enqueue 0.609326 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918799 ms - Host latency: 0.949731 ms (enqueue 0.612598 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917969 ms - Host latency: 0.949268 ms (enqueue 0.614307 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919214 ms - Host latency: 0.950708 ms (enqueue 0.609228 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919287 ms - Host latency: 0.950781 ms (enqueue 0.608447 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917969 ms - Host latency: 0.949194 ms (enqueue 0.612915 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918555 ms - Host latency: 0.950122 ms (enqueue 0.615356 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917773 ms - Host latency: 0.949951 ms (enqueue 0.613501 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91853 ms - Host latency: 0.950806 ms (enqueue 0.614136 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919092 ms - Host latency: 0.949951 ms (enqueue 0.613355 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918213 ms - Host latency: 0.950513 ms (enqueue 0.610718 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918433 ms - Host latency: 0.95083 ms (enqueue 0.610425 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917773 ms - Host latency: 0.950317 ms (enqueue 0.614551 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918823 ms - Host latency: 0.950928 ms (enqueue 0.611841 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918457 ms - Host latency: 0.950269 ms (enqueue 0.612573 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918457 ms - Host latency: 0.949561 ms (enqueue 0.614331 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919482 ms - Host latency: 0.950806 ms (enqueue 0.610254 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919458 ms - Host latency: 0.952002 ms (enqueue 0.610254 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918457 ms - Host latency: 0.949707 ms (enqueue 0.614551 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918896 ms - Host latency: 0.950952 ms (enqueue 0.611768 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918237 ms - Host latency: 0.949512 ms (enqueue 0.609546 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918408 ms - Host latency: 0.950391 ms (enqueue 0.61355 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918896 ms - Host latency: 0.95083 ms (enqueue 0.612524 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91814 ms - Host latency: 0.95061 ms (enqueue 0.610522 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918408 ms - Host latency: 0.950171 ms (enqueue 0.60979 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918433 ms - Host latency: 0.950513 ms (enqueue 0.6146 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918481 ms - Host latency: 0.949951 ms (enqueue 0.60896 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919775 ms - Host latency: 0.950732 ms (enqueue 0.609204 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919531 ms - Host latency: 0.951489 ms (enqueue 0.617041 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919336 ms - Host latency: 0.951709 ms (enqueue 0.615088 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918286 ms - Host latency: 0.951025 ms (enqueue 0.615869 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917725 ms - Host latency: 0.948169 ms (enqueue 0.614722 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919751 ms - Host latency: 0.949634 ms (enqueue 0.607397 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918311 ms - Host latency: 0.947607 ms (enqueue 0.61438 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919263 ms - Host latency: 0.950879 ms (enqueue 0.617188 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918896 ms - Host latency: 0.952344 ms (enqueue 0.608716 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918799 ms - Host latency: 0.949854 ms (enqueue 0.60625 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919165 ms - Host latency: 0.951172 ms (enqueue 0.610645 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918506 ms - Host latency: 0.951782 ms (enqueue 0.615356 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919897 ms - Host latency: 0.951074 ms (enqueue 0.615332 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918115 ms - Host latency: 0.949976 ms (enqueue 0.609277 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919287 ms - Host latency: 0.950928 ms (enqueue 0.612183 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917725 ms - Host latency: 0.949805 ms (enqueue 0.613086 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918652 ms - Host latency: 0.94917 ms (enqueue 0.611548 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917627 ms - Host latency: 0.948096 ms (enqueue 0.615698 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918921 ms - Host latency: 0.950537 ms (enqueue 0.614087 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918237 ms - Host latency: 0.950342 ms (enqueue 0.611133 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918555 ms - Host latency: 0.950342 ms (enqueue 0.613208 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919287 ms - Host latency: 0.95061 ms (enqueue 0.613501 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919971 ms - Host latency: 0.952393 ms (enqueue 0.60874 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918945 ms - Host latency: 0.951025 ms (enqueue 0.611523 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918433 ms - Host latency: 0.949902 ms (enqueue 0.614722 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918604 ms - Host latency: 0.950122 ms (enqueue 0.608984 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919287 ms - Host latency: 0.95061 ms (enqueue 0.613208 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91792 ms - Host latency: 0.950146 ms (enqueue 0.619531 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918677 ms - Host latency: 0.948901 ms (enqueue 0.613428 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918774 ms - Host latency: 0.949414 ms (enqueue 0.616016 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918506 ms - Host latency: 0.948828 ms (enqueue 0.612012 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918726 ms - Host latency: 0.949145 ms (enqueue 0.609155 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.9177 ms - Host latency: 0.9479 ms (enqueue 0.60979 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917773 ms - Host latency: 0.949097 ms (enqueue 0.612085 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918994 ms - Host latency: 0.948828 ms (enqueue 0.615161 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918311 ms - Host latency: 0.948364 ms (enqueue 0.610669 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918042 ms - Host latency: 0.948901 ms (enqueue 0.607886 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919287 ms - Host latency: 0.948486 ms (enqueue 0.612451 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917651 ms - Host latency: 0.947241 ms (enqueue 0.609839 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918457 ms - Host latency: 0.949463 ms (enqueue 0.630029 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919165 ms - Host latency: 0.951074 ms (enqueue 0.617895 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.917529 ms - Host latency: 0.948877 ms (enqueue 0.615063 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919287 ms - Host latency: 0.950244 ms (enqueue 0.623193 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918115 ms - Host latency: 0.949341 ms (enqueue 0.618237 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919092 ms - Host latency: 0.950952 ms (enqueue 0.619629 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919409 ms - Host latency: 0.95188 ms (enqueue 0.616138 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919556 ms - Host latency: 0.951538 ms (enqueue 0.611401 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919946 ms - Host latency: 0.951489 ms (enqueue 0.619263 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919165 ms - Host latency: 0.952173 ms (enqueue 0.617895 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919751 ms - Host latency: 0.952905 ms (enqueue 0.613184 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919189 ms - Host latency: 0.951465 ms (enqueue 0.614624 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919458 ms - Host latency: 0.952734 ms (enqueue 0.612817 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918872 ms - Host latency: 0.949292 ms (enqueue 0.616699 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918262 ms - Host latency: 0.949121 ms (enqueue 0.615747 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.919604 ms - Host latency: 0.952246 ms (enqueue 0.613599 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918604 ms - Host latency: 0.949243 ms (enqueue 0.607275 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.91853 ms - Host latency: 0.947827 ms (enqueue 0.611108 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918628 ms - Host latency: 0.949536 ms (enqueue 0.614917 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918262 ms - Host latency: 0.948584 ms (enqueue 0.613159 ms)
+[10/13/2026-21:48:15] [I] Average on 10 runs - GPU latency: 0.918286 ms - Host latency: 0.948511 ms (enqueue 0.611621 ms)
+[10/13/2026-21:48:15] [I] 
+[10/13/2026-21:48:15] [I] === Performance summary ===
+[10/13/2026-21:48:15] [I] Throughput: 1085 qps
+[10/13/2026-21:48:15] [I] Latency: min = 0.938965 ms, max = 0.973633 ms, mean = 0.949873 ms, median = 0.949707 ms, percentile(90%) = 0.954102 ms, percentile(95%) = 0.955566 ms, percentile(99%) = 0.958313 ms
+[10/13/2026-21:48:15] [I] Enqueue Time: min = 0.592163 ms, max = 0.729004 ms, mean = 0.612248 ms, median = 0.608643 ms, percentile(90%) = 0.63208 ms, percentile(95%) = 0.641846 ms, percentile(99%) = 0.654053 ms
+[10/13/2026-21:48:15] [I] H2D Latency: min = 0.0180664 ms, max = 0.0445557 ms, mean = 0.0215531 ms, median = 0.020752 ms, percentile(90%) = 0.0246582 ms, percentile(95%) = 0.0251465 ms, percentile(99%) = 0.0284424 ms
+[10/13/2026-21:48:15] [I] GPU Compute Time: min = 0.9104 ms, max = 0.926758 ms, mean = 0.918557 ms, median = 0.918457 ms, percentile(90%) = 0.921509 ms, percentile(95%) = 0.922363 ms, percentile(99%) = 0.924072 ms
+[10/13/2026-21:48:15] [I] D2H Latency: min = 0.00683594 ms, max = 0.0117798 ms, mean = 0.00976189 ms, median = 0.00976562 ms, percentile(90%) = 0.010498 ms, percentile(95%) = 0.0107422 ms, percentile(99%) = 0.0114746 ms
+[10/13/2026-21:48:15] [I] Total Host Walltime: 3.00278 s
+[10/13/2026-21:48:15] [I] Total GPU Compute Time: 2.99266 s
+[10/13/2026-21:48:15] [I] Explanations of the performance metrics are printed in the verbose logs.
+[10/13/2026-21:48:15] [I] 
+&&&& PASSED TensorRT.trtexec [TensorRT v100300] # /usr/src/tensorrt/bin/trtexec --loadEngine=models/perception_fp32.engine --shapes=crop:1x3x128x128,bbox_feat:1x4 --iterations=200 --warmUp=500

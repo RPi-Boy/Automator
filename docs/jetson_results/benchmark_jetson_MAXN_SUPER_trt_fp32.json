@@ -1,0 +1,32 @@
+{
+  "machine": "Linux-5.15.185-tegra-aarch64-with-glibc2.35",
+  "processor": "aarch64",
+  "backend": "tensorrt 10.3.0 (cuda-python)",
+  "model": "models/perception_fp32.engine",
+  "iters": 200,
+  "objects_per_frame": 3,
+  "detection": {
+    "mean_ms": 2.990268630009041,
+    "p50_ms": 2.9715594999970563,
+    "p95_ms": 3.193006599974524,
+    "max_ms": 3.568734000054974
+  },
+  "network": {
+    "mean_ms": 2.105634989987948,
+    "p50_ms": 2.102342999933171,
+    "p95_ms": 2.137874599918632,
+    "max_ms": 2.150772000049983
+  },
+  "ik_and_planning": {
+    "mean_ms": 1.0879209850065763,
+    "p50_ms": 1.0853730000235373,
+    "p95_ms": 1.138883049929973,
+    "max_ms": 1.2647670000660582
+  },
+  "total": {
+    "mean_ms": 6.183824605003565,
+    "p50_ms": 6.161067999983061,
+    "p95_ms": 6.382346849852638,
+    "max_ms": 6.80601499993827
+  }
+}

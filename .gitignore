@@ -45,3 +45,6 @@ token.json
 
 # Per-machine check output
 jetson_selfcheck.txt
+
+# Dashboard run output
+runs/

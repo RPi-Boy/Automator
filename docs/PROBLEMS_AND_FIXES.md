@@ -61,3 +61,16 @@ Status: **Fixed** = changed and tested on the PC. **Written** = code exists but 
 | 29 | `client_secrets.json` (Google OAuth) sat untracked and not ignored; no commit existed. | Added to `.gitignore` (also `token.json`, `.pio/`). **Rotate that secret if it was ever shared.** | Fixed |
 | 30 | Docs disagreed with the code (14-d vs 18-d state, a `notebooks/` directory that does not exist, `data/` links, "<1 ms ISR" claims). | `architecture.md`, `README.md`, `task_plan.md` rewritten; `report.md` contains only measured values. | Fixed |
 | 31 | Dead code and stale artefacts: Cornell-noise dataset code/tests, a placeholder engine, an old ONNX file. | Removed (the pre-change tarball has them). `train_colab.ipynb`, `record_*` scripts and `arm_env.py` still target the old pick-and-place task. | **Open** (stale, unused) |
+
+## G. Found while bringing the Jetson up (2026-10-13)
+| # | Problem | Fix | Status |
+|---|---|---|---|
+| 32 | `pip install onnxruntime` pulls **NumPy 2**, which breaks the apt OpenCV (`_ARRAY_API not found`). | Pin `numpy<2` in `jetson_install.sh`, instructions and troubleshooting. | Fixed |
+| 33 | A fresh JetPack 6 image had **no TensorRT or CUDA**, and after `apt install tensorrt` it still failed (`libnvdla_compiler.so`, then `libcudla.so.1`: cannot open shared object file). | `jetson_install.sh` installs `tensorrt python3-libnvinfer libnvinfer-bin nvidia-l4t-dla-compiler libcudla-12-6` and runs `ldconfig`. | Fixed |
+| 34 | The TensorRT backend needed NVIDIA's CUDA PyTorch wheel, which is not available on the board; it was also written for TensorRT 8 binding calls. | Rewritten for the TensorRT 10 tensor API using `cuda-python`; verified against ONNX outputs (logit diff < 0.005, same classes). | Fixed |
+| 35 | `ffmpeg` missing, and OpenCV writes MPEG-4 part 2, which browsers cannot play. | `ffmpeg` in the install script; the dashboard transcodes every video to H.264 (about 10x smaller). | Fixed |
+| 36 | `sort_demo.py` imported PyTorch at the top, so it could not run on a Jetson without it. | It now uses the shared inference backends (.onnx / .engine / .pt). | Fixed |
+| 37 | The instructions said to benchmark in "full-speed mode" but never said what was expected; numbers depend strongly on the power mode (CPU path 14.0 ms in 25 W vs 11.0 ms in MAXN_SUPER). | Documented; the measured table is in `docs/JETSON_RESULTS.md`. | Fixed |
+| 38 | The simulation is very slow on the Jetson CPU (camera render 270-350 ms/frame; a 3-trial sorting run took 711 s), so the simulated camera cannot keep a 3 Hz rate. | Documented; use `camera_hz` 2-3 and expect slower-than-real-time simulation. Perception itself is about 5.6 ms. | Open (inherent) |
+| 39 | This PC could not reach the Jetson: its SSH alias pointed at 172.17.221.225, which the PC routes into the `docker0` bridge (172.17.0.0/16). | Use the Jetson's real address (10.204.202.225) or change the Docker bridge subnet. | Noted |
+| 40 | Juniors could not run the on-device tests (no access to the Jetson). | Web dashboard (`webapp/`) so one person can run and download everything from a browser; the tests were then run on the Jetson and recorded. | Fixed |

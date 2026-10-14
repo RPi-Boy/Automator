@@ -10,10 +10,13 @@ Open `esp32_actuator/` as a sketch (`esp32_actuator.ino` plus `pins.h`, `stepper
 
 ## Jetson side
 ```bash
+scripts/start_microros_agent.sh          # from the repo root: finds the port, checks permissions, starts the agent
+# or by hand:
 source /opt/ros/humble/setup.bash
 ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -b 115200
 ```
-Close the Arduino serial monitor first (it would hold the port). Check with `ros2 topic list` that the ESP32 node `esp32_actuator` appears.
+Start the agent after the ESP32 is powered, then press the board's EN (reset) button once so it connects.
+Close the Arduino serial monitor first (it would hold the port). Check with `ros2 topic list` that `/esp32/status` appears, and with `ros2 topic echo /esp32/status` that numbers arrive. With the demo running, the command counter should grow by about 50 per second (bits 8 and up); a much lower rate would mean the 115200-baud link is saturated and is worth reporting.
 
 ## Interface
 | Topic | Type | Direction | Meaning |
@@ -22,6 +25,7 @@ Close the Arduino serial monitor first (it would hold the port). Check with `ros
 | `/arm_target` | Float32MultiArray `[x,y,z,class,uncertainty]` | in | safety gate: uncertainty > 0.75 halts |
 | `/estop` | Bool | in | true halts |
 | `/estop_reset` | Bool | in | true clears the latch (refused while the hardware line is still asserted) |
+| `/esp32/status` | Int32 | **out**, 5 Hz | heartbeat: bit0 e-stop latched, bit1 motors enabled, bit2 command fresh (< 200 ms), bit3 hardware e-stop line low, bits 8-23 count of `/joint_commands` received (value / 256). The Jetson demo viewer decodes it; `ros2 topic echo /esp32/status` shows the raw number. |
 
 ## Safety behaviour
 1. **Hardware e-stop**: GPIO33, active LOW, real `attachInterrupt(FALLING)`. Wire a normally-closed button to GND, or a Jetson GPIO (open-drain).

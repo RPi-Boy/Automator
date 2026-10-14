@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Automator Edge Tests</title>
+<style>
+  :root {
+    --bg:#0f1318; --panel:#171d25; --panel2:#1d2530; --line:#2a3441; --text:#e6ebf2; --muted:#8b98a9;
+    --accent:#4ea1ff; --good:#3ecf8e; --warn:#f5a623; --bad:#ff5d5d; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#f3f5f8; --panel:#ffffff; --panel2:#f0f3f7; --line:#d8dee7; --text:#18202b; --muted:#5d6b7e; --accent:#1769d6; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  header { padding:14px 20px; display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:5; }
+  header h1 { font-size:18px; margin:0; font-weight:650; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-size:12px; padding:2px 9px; border-radius:99px; border:1px solid var(--line); color:var(--muted); background:var(--panel2); white-space:nowrap; }
+  .chip.ok { color:var(--good); border-color:color-mix(in srgb,var(--good) 40%,var(--line)); }
+  .chip.no { color:var(--muted); text-decoration:line-through; }
+  main { max-width:1280px; margin:0 auto; padding:16px 20px 60px; }
+  h2 { font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:26px 0 10px; font-weight:650; }
+  .grid { display:grid; gap:12px; }
+  .tel { grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+  .cards { grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); }
+  .tile,.card,.panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; }
+  .tile { padding:10px 12px; }
+  .tile .k { font-size:12px; color:var(--muted); }
+  .tile .v { font-size:22px; font-weight:650; font-variant-numeric:tabular-nums; }
+  .tile .v small { font-size:13px; color:var(--muted); font-weight:500; }
+  .tile canvas { width:100%; height:26px; display:block; margin-top:2px; }
+  .card { padding:14px; display:flex; flex-direction:column; gap:8px; }
+  .card h3 { margin:0; font-size:15px; }
+  .card p { margin:0; color:var(--muted); font-size:13px; flex:1; }
+  .params { display:flex; flex-wrap:wrap; gap:8px; }
+  label { font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:2px; }
+  input,select { background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:5px 7px; font:inherit; width:100%; min-width:90px; }
+  button { background:var(--accent); color:#fff; border:0; border-radius:7px; padding:8px 12px; font:inherit; font-weight:600; cursor:pointer; }
+  button.sec { background:var(--panel2); color:var(--text); border:1px solid var(--line); font-weight:500; }
+  button.danger { background:var(--bad); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .live { display:grid; gap:12px; grid-template-columns:minmax(0,1fr); }
+  @media (min-width:900px){ .live { grid-template-columns:minmax(0,5fr) minmax(0,6fr); } }
+  .panel { padding:12px; }
+  .panel .head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+  .badge { font-size:12px; padding:2px 9px; border-radius:99px; font-weight:600; }
+  .running { background:color-mix(in srgb,var(--accent) 22%,transparent); color:var(--accent); }
+  .done { background:color-mix(in srgb,var(--good) 22%,transparent); color:var(--good); }
+  .failed,.stopped { background:color-mix(in srgb,var(--bad) 22%,transparent); color:var(--bad); }
+  #frame { width:100%; aspect-ratio:4/3; background:#000; border-radius:8px; object-fit:contain; display:block; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(88px,1fr)); gap:8px; margin-bottom:8px; }
+  .stats .tile { padding:6px 9px; } .stats .v { font-size:18px; }
+  canvas#chart { width:100%; height:190px; display:block; background:var(--panel2); border-radius:8px; }
+  .legend { display:flex; gap:14px; font-size:12px; color:var(--muted); margin:6px 0 0; flex-wrap:wrap; }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+  pre#log { margin:0; background:#0a0d11; color:#cfd8e3; font:12px/1.4 var(--mono); padding:10px; border-radius:8px; height:260px; overflow:auto; white-space:pre-wrap; word-break:break-word; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; font-size:12px; }
+  td.num,th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+  .files a,.files button { display:inline-block; margin:2px 8px 2px 0; font-size:12px; }
+  .files button { padding:1px 8px; }
+  .empty { color:var(--muted); font-size:13px; padding:8px 2px; }
+  #modal { position:fixed; inset:0; background:rgba(0,0,0,.8); display:none; align-items:center; justify-content:center; z-index:20; padding:16px; }
+  #modal video { max-width:100%; max-height:88vh; border-radius:8px; background:#000; }
+  #modal .x { position:absolute; top:14px; right:20px; }
+  .note { font-size:12px; color:var(--muted); margin-top:6px; }
+  .scroll { overflow-x:auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Automator · Edge Tests</h1>
+  <div class="chips" id="chips"></div>
+</header>
+<main>
+  <h2>Device</h2>
+  <div class="grid tel" id="tel"></div>
+
+  <h2>Run a test</h2>
+  <div class="grid cards" id="cards"></div>
+  <div class="note">One test runs at a time. Results stay on the Jetson under <code>runs/</code> until you delete them.</div>
+
+  <h2>Live view</h2>
+  <div class="panel" id="livepanel">
+    <div class="head">
+      <strong id="runtitle">No run selected</strong><span class="badge" id="runbadge"></span>
+      <span class="chip" id="runtime"></span>
+      <button class="danger" id="stopbtn" style="display:none">Stop</button>
+    </div>
+    <div class="live">
+      <div>
+        <img id="frame" alt="live frame" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+        <div class="note" id="framenote">The latest simulated camera / spectator frame appears here while a latency or sorting test runs.</div>
+      </div>
+      <div>
+        <div class="stats" id="stats"></div>
+        <canvas id="chart"></canvas>
+        <div class="legend"><span><i style="background:#4ea1ff"></i>total ms</span><span><i style="background:#3ecf8e"></i>network ms</span><span><i style="background:#f5a623"></i>detection ms</span></div>
+        <div id="extra"></div>
+      </div>
+    </div>
+    <h2 style="margin-top:14px">Log</h2>
+    <pre id="log"></pre>
+  </div>
+
+  <h2>Results &amp; downloads</h2>
+  <div class="panel scroll"><table id="runs"><thead><tr><th>When</th><th>Test</th><th>Status</th><th>Result</th><th>Files</th><th></th></tr></thead><tbody></tbody></table>
+    <div class="empty" id="noruns" style="display:none">No runs yet. Start one above.</div></div>
+  <h2>Earlier results in the repository</h2>
+  <div class="panel" id="modelfiles"><div class="empty">loading…</div></div>
+</main>
+<div id="modal"><button class="sec x" onclick="closeModal()">Close ✕</button><video controls autoplay id="player"></video></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = (v, d=1) => (v === undefined || v === null || isNaN(v)) ? '–' : Number(v).toFixed(d);
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({credentials:'same-origin'}, opts || {}));
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+const BL = {onnx:'ONNX Runtime (CPU)', trt_fp16:'TensorRT FP16 (GPU)', trt_fp32:'TensorRT FP32 (GPU)'};
+let INFO = null, JOBS = [], selected = null, st = null, running = false, history = {gpu:[], pwr:[], cpu:[], tmp:[]};
+
+// ---------- header + device tiles
+function renderChips() {
+  const i = INFO, c = [];
+  c.push(`<span class="chip">${esc(i.hostname)}</span>`);
+  if (i.jetson) c.push(`<span class="chip">${esc(i.jetson.replace(/^# /,'').split(',')[0])} ${esc((i.jetson.match(/REVISION: ([\d.]+)/)||[])[1]||'')}</span>`);
+  if (i.power_mode) c.push(`<span class="chip">power: ${esc(i.power_mode)}</span>`);
+  for (const [k, ok] of Object.entries(i.backends)) c.push(`<span class="chip ${ok?'ok':'no'}">${BL[k]}</span>`);
+  c.push(`<span class="chip ${i.ffmpeg?'ok':'no'}">video H.264</span><span class="chip ${i.ros?'ok':'no'}">ROS 2</span>`);
+  $('#chips').innerHTML = c.join('');
+}
+const TILES = [['gpu_pct','GPU','%',0,100,'gpu'],['cpu_pct','CPU','%',0,100,'cpu'],['ram','RAM','',0,0,null],['temp_c','Temp','°C',0,0,'tmp'],['power_w','Power','W',0,0,'pwr']];
+function renderTelemetry(t) {
+  if (!$('#tel').children.length) $('#tel').innerHTML = TILES.map(x => `<div class="tile"><div class="k">${x[1]}</div><div class="v" id="t_${x[0]}">–</div><canvas id="s_${x[0]}" width="150" height="26"></canvas></div>`).join('');
+  const val = {gpu_pct:t.gpu_pct, cpu_pct:t.cpu_pct, temp_c:t.temp_c, power_w:t.power_w, ram: t.ram_total_mb ? t.ram_used_mb/t.ram_total_mb*100 : undefined};
+  for (const x of TILES) {
+    const v = val[x[0]], el = $('#t_'+x[0]);
+    if (x[0] === 'ram') el.innerHTML = t.ram_total_mb ? `${(t.ram_used_mb/1024).toFixed(1)}<small> / ${(t.ram_total_mb/1024).toFixed(1)} GB</small>` : '–';
+    else el.innerHTML = v === undefined ? '–' : `${x[0]==='power_w'||x[0]==='temp_c' ? Number(v).toFixed(1) : Math.round(v)}<small> ${x[2]}</small>`;
+    const key = x[5] || 'ram'; (history[key] = history[key] || []).push(v === undefined ? 0 : v); if (history[key].length > 90) history[key].shift();
+    spark($('#s_'+x[0]), history[key], x[0]==='gpu_pct'||x[0]==='cpu_pct' ? 100 : null);
+  }
+}
+function spark(cv, data, fixedMax) {
+  const g = cv.getContext('2d'); g.clearRect(0,0,cv.width,cv.height);
+  if (data.length < 2) return;
+  const mx = fixedMax || Math.max(...data, 1e-6) * 1.15, mn = fixedMax ? 0 : Math.min(...data) * 0.9;
+  g.strokeStyle = '#4ea1ff'; g.lineWidth = 1.5; g.beginPath();
+  data.forEach((v,i) => { const x = i/(data.length-1)*cv.width, y = cv.height-2-(v-mn)/(mx-mn||1)*(cv.height-4); i?g.lineTo(x,y):g.moveTo(x,y); }); g.stroke();
+}
+
+// ---------- test cards
+function backendSelect(id) {
+  return `<label>backend<select id="${id}">` + Object.keys(BL).map(k => `<option value="${k}" ${INFO.backends[k]?'':'disabled'}>${BL[k]}${INFO.backends[k]?'':' (not available)'}</option>`).join('') + `</select></label>`;
+}
+function renderCards() {
+  $('#cards').innerHTML = JOBS.map(j => {
+    const ps = j.params.map(p => {
+      const id = `p_${j.name}_${p[0]}`;
+      if (p[1] === 'backend') { return backendSelect(id); }
+      if (p[1] === 'number') return `<label>${esc(p[5])}<input id="${id}" type="number" value="${p[2]}" min="${p[3]}" max="${p[4]}"></label>`;
+      if (p[1] === 'select') return `<label>${esc(p[4])}<select id="${id}">${p[3].map(o => `<option ${o===p[2]?'selected':''}>${o}</option>`).join('')}</select></label>`;
+      return '';
+    }).join('');
+    return `<div class="card"><h3>${esc(j.title)}</h3><p>${esc(j.desc)}</p><div class="params">${ps}</div><button data-job="${j.name}" class="runbtn">Run</button></div>`;
+  }).join('');
+  // default backend: fastest available
+  const pref = ['trt_fp16','trt_fp32','onnx'].find(k => INFO.backends[k]);
+  document.querySelectorAll('select[id$="_backend"]').forEach(s => { if (pref) s.value = pref; });
+  document.querySelectorAll('.runbtn').forEach(b => b.onclick = () => startJob(b.dataset.job));
+}
+async function startJob(name) {
+  const params = {};
+  document.querySelectorAll(`[id^="p_${name}_"]`).forEach(el => params[el.id.slice(`p_${name}_`.length)] = el.value);
+  try { const meta = await api('/api/run', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({job:name, params})}); select(meta.id, true); refreshRuns(); }
+  catch (e) { alert('Could not start: ' + e.message); }
+}
+function setBusy(b) { running = b; document.querySelectorAll('.runbtn').forEach(x => x.disabled = b); $('#stopbtn').style.display = b ? '' : 'none'; }
+$('#stopbtn').onclick = async () => { await api('/api/stop', {method:'POST'}); };
+
+// ---------- selected run: log, metrics, frame, chart
+function select(id, scroll) {
+  selected = id; st = {logOff:0, metOff:0, iters:[], trials:[], done:[], meta:null, text:''};
+  $('#log').textContent = ''; $('#extra').innerHTML = ''; $('#stats').innerHTML = '';
+  $('#frame').src = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+  drawChart(); poll(true);
+  if (scroll) $('#livepanel').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function pct(a, p) { if (!a.length) return NaN; const s = [...a].sort((x,y)=>x-y); return s[Math.min(s.length-1, Math.floor(p/100*s.length))]; }
+function drawChart() {
+  const cv = $('#chart'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W*dpr; cv.height = H*dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0,0,W,H);
+  const n = 400, pts = (st ? st.iters : []).slice(-n);
+  if (pts.length < 2) { g.fillStyle = '#8b98a9'; g.font = '13px system-ui'; g.fillText('latency chart appears when a benchmark or sorting run produces data', 12, H/2); return; }
+  const mx = Math.max(...pts.map(p => p.total)) * 1.15, left = 38, bottom = 16;
+  g.strokeStyle = 'rgba(139,152,169,.25)'; g.fillStyle = '#8b98a9'; g.font = '11px system-ui';
+  for (let k = 0; k <= 4; k++) { const y = 6 + (H-bottom-6) * (1-k/4); g.beginPath(); g.moveTo(left,y); g.lineTo(W-4,y); g.stroke(); g.fillText((mx*k/4).toFixed(1), 2, y+4); }
+  const line = (key, color) => { g.strokeStyle = color; g.lineWidth = 1.6; g.beginPath(); pts.forEach((p,i) => { const x = left + i/(pts.length-1)*(W-left-4), y = 6 + (H-bottom-6)*(1-p[key]/mx); i?g.lineTo(x,y):g.moveTo(x,y); }); g.stroke(); };
+  line('detect', '#f5a623'); line('network', '#3ecf8e'); line('total', '#4ea1ff');
+  g.fillStyle = '#8b98a9'; g.fillText('ms per frame — last ' + pts.length + ' samples', left, H-3);
+}
+function renderStats() {
+  const t = st.iters.map(p => p.total);
+  const tiles = [['last', t[t.length-1]], ['mean', t.length ? t.reduce((a,b)=>a+b,0)/t.length : NaN], ['p50', pct(t,50)], ['p95', pct(t,95)], ['max', t.length ? Math.max(...t) : NaN]];
+  const net = st.iters.map(p => p.network), det = st.iters.map(p => p.detect);
+  tiles.push(['network mean', net.length ? net.reduce((a,b)=>a+b,0)/net.length : NaN], ['detect mean', det.length ? det.reduce((a,b)=>a+b,0)/det.length : NaN]);
+  $('#stats').innerHTML = tiles.map(x => `<div class="tile"><div class="k">${x[0]}</div><div class="v">${fmt(x[1], 2)}<small> ms</small></div></div>`).join('') + `<div class="tile"><div class="k">samples</div><div class="v">${st.iters.length}</div></div>`;
+}
+function renderExtra() {
+  let h = '';
+  if (st.done.length) {
+    h += `<div class="scroll"><table><thead><tr><th>backend</th><th class="num">detect</th><th class="num">network</th><th class="num">plan</th><th class="num">total mean</th><th class="num">p95</th><th class="num">max</th></tr></thead><tbody>` +
+      st.done.map(r => `<tr><td>${esc(r.backend)}</td><td class="num">${fmt(r.detection.mean_ms,2)}</td><td class="num">${fmt(r.network.mean_ms,2)}</td><td class="num">${fmt(r.ik_and_planning.mean_ms,2)}</td><td class="num"><strong>${fmt(r.total.mean_ms,2)}</strong></td><td class="num">${fmt(r.total.p95_ms,2)}</td><td class="num">${fmt(r.total.max_ms,2)}</td></tr>`).join('') + '</tbody></table></div><div class="note">all values in ms</div>';
+  }
+  if (st.trials.length) {
+    h += `<div class="scroll"><table><thead><tr><th>trial</th><th>sorted correctly</th><th>e-stops</th><th class="num">sim time</th></tr></thead><tbody>` +
+      st.trials.map(r => `<tr><td>${r.trial}</td><td>${r.sorted_correctly} / ${r.objects}</td><td>${r.estops}</td><td class="num">${fmt(r.sim_seconds,0)} s</td></tr>`).join('') + '</tbody></table></div>';
+  }
+  $('#extra').innerHTML = h;
+}
+async function poll(first) {
+  if (!selected) return;
+  const id = selected;
+  try {
+    const lg = await api(`/api/run/${id}/log?offset=${st.logOff}`);
+    if (id !== selected) return;
+    if (lg.text) { const el = $('#log'), atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - 30; el.textContent += lg.text; if (atEnd) el.scrollTop = el.scrollHeight; }
+    st.logOff = lg.offset;
+    const mt = await api(`/api/run/${id}/metrics?offset=${st.metOff}`);
+    if (id !== selected) return;
+    st.metOff = mt.offset;
+    for (const l of mt.lines) {
+      if (l.kind === 'iter') st.iters.push({total:l.total_ms, network:l.network_ms, detect:l.detect_ms});
+      else if (l.kind === 'perception') st.iters.push({total:l.detect_ms + l.network_ms, network:l.network_ms, detect:l.detect_ms});
+      else if (l.kind === 'trial') st.trials.push(l);
+      else if (l.kind === 'done') st.done.push(l.summary);
+    }
+    if (mt.lines.length) { renderStats(); drawChart(); renderExtra(); }
+    const meta = await api(`/api/run/${id}/meta`);
+    st.meta = meta; $('#runtitle').textContent = meta.title + (Object.keys(meta.params||{}).length ? '  ·  ' + Object.entries(meta.params).map(([k,v]) => k+'='+v).join(', ') : '');
+    $('#runbadge').className = 'badge ' + meta.status; $('#runbadge').textContent = meta.status;
+    const el = ((meta.ended || Date.now()/1000) - meta.started); $('#runtime').textContent = el.toFixed(0) + ' s';
+    if (meta.status === 'running') { $('#frame').src = `/api/run/${id}/live.jpg?t=${Date.now()}`; $('#framenote').textContent = 'Live frame (refreshes about 4×/s)'; }
+    else if (!st.finalShown) { st.finalShown = true; $('#frame').src = `/api/run/${id}/live.jpg?t=${Date.now()}`; $('#framenote').textContent = 'Last frame of the run'; refreshRuns(); }
+  } catch (e) { /* run may not have files yet */ }
+}
+$('#frame').onerror = () => { $('#framenote').textContent = 'No frame for this run (the self-check, trtexec and ROS tests have none).'; };
+
+// ---------- runs table
+const KB = n => n > 1e6 ? (n/1e6).toFixed(1)+' MB' : Math.max(1,Math.round(n/1e3))+' kB';
+function summaryText(r) {
+  const s = r.summary || {};
+  if (s.runs && s.runs.length) return s.runs.map(x => `${esc(x.backend)}: <strong>${fmt(x.total_mean_ms,2)} ms</strong> (p95 ${fmt(x.total_p95_ms,2)})`).join('<br>');
+  if (s.gpu_mean_ms !== undefined) return `GPU compute <strong>${fmt(s.gpu_mean_ms,3)} ms</strong> mean, p95 ${fmt(s.gpu_p95_ms,3)} ms · ${fmt(s.throughput_qps,0)} qps`;
+  if (s.success_rate !== undefined) return `<strong>${s.sorted_correctly}/${s.known_objects_total}</strong> sorted correctly (${fmt(s.success_rate*100,1)} %), e-stop trials ${s.estop_trials}`;
+  if (s.fails !== undefined) return `${s.passes} pass · ${s.warns} warn · <strong>${s.fails} fail</strong>`;
+  return '';
+}
+function fileLinks(r) {
+  const out = [];
+  for (const f of r.files) {
+    const url = `/files/${r.id}/${f.path.split('/').map(encodeURIComponent).join('/')}`;
+    const isVid = f.path.endsWith('.mp4');
+    out.push((isVid ? `<button class="sec" onclick="play('${url}')">▶</button>` : '') + `<a href="${url}?dl=1">${esc(f.path)}</a> <span class="chip">${KB(f.size)}</span>`);
+  }
+  if (r.files.length) out.push(`<a href="/api/run/${r.id}/zip">⬇ all as .zip</a>`);
+  return out.join('<br>');
+}
+async function refreshRuns() {
+  try {
+    const j = await api('/api/runs');
+    setBusy(!!j.current);
+    $('#noruns').style.display = j.runs.length ? 'none' : '';
+    $('#runs tbody').innerHTML = j.runs.map(r => `<tr><td>${esc(r.id.slice(0,4)+'-'+r.id.slice(4,6)+'-'+r.id.slice(6,8)+' '+r.id.slice(9,11)+':'+r.id.slice(11,13)+':'+r.id.slice(13,15))}</td><td><a href="#" onclick="select('${r.id}', true);return false">${esc(r.title)}</a><div class="note">${esc(Object.entries(r.params||{}).map(([k,v])=>k+'='+v).join(', '))}</div></td><td><span class="badge ${r.status}">${r.status}</span></td><td>${summaryText(r)}</td><td class="files">${fileLinks(r)}</td><td><button class="sec" onclick="del('${r.id}')">Delete</button></td></tr>`).join('');
+  } catch (e) {}
+}
+async function del(id) { if (confirm('Delete this run and its files from the Jetson?')) { await api('/api/run/'+id, {method:'DELETE'}).catch(e => alert(e.message)); if (selected === id) selected = null; refreshRuns(); } }
+function play(url) { const p = $('#player'); p.src = url; $('#modal').style.display = 'flex'; p.play().catch(()=>{}); }
+function closeModal() { const p = $('#player'); p.pause(); p.removeAttribute('src'); p.load(); $('#modal').style.display = 'none'; }
+$('#modal').onclick = e => { if (e.target.id === 'modal') closeModal(); };
+async function modelFiles() {
+  const j = await api('/files-models');
+  $('#modelfiles').innerHTML = j.files.length ? j.files.map(f => `<a href="/models-file/${encodeURIComponent(f.path)}?dl=1">${esc(f.path)}</a> <span class="chip">${KB(f.size)}</span>`).join(' &nbsp; ') : '<div class="empty">none</div>';
+}
+
+// ---------- boot
+async function boot() {
+  const j = await api('/api/info'); INFO = j.info; JOBS = j.jobs; renderChips(); renderCards(); renderTelemetry(j.telemetry); setBusy(!!j.current);
+  modelFiles(); refreshRuns();
+  if (j.current) select(j.current.id);
+  setInterval(async () => { try { const t = await api('/api/telemetry'); renderTelemetry(t.telemetry); } catch(e){} }, 1000);
+  setInterval(() => { if (selected) poll(); }, 700);
+  setInterval(refreshRuns, 3000);
+  window.addEventListener('resize', drawChart);
+}
+boot().catch(e => { document.body.insertAdjacentHTML('afterbegin', `<p style="padding:20px;color:#ff5d5d">Cannot load: ${esc(e.message)}. Open the URL printed by the server (it ends in ?token=...)</p>`); });
+</script>
+</body>
+</html>

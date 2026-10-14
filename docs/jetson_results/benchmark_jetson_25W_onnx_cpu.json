@@ -1,0 +1,32 @@
+{
+  "machine": "Linux-5.15.185-tegra-aarch64-with-glibc2.35",
+  "processor": "aarch64",
+  "backend": "onnxruntime[CPUExecutionProvider]",
+  "model": "models/perception.onnx",
+  "iters": 200,
+  "objects_per_frame": 3,
+  "detection": {
+    "mean_ms": 4.750617350002528,
+    "p50_ms": 4.662209999992228,
+    "p95_ms": 5.721716000002175,
+    "max_ms": 6.476501999998163
+  },
+  "network": {
+    "mean_ms": 7.713958319998824,
+    "p50_ms": 7.663122999986172,
+    "p95_ms": 7.836647000002017,
+    "max_ms": 12.887610999996468
+  },
+  "ik_and_planning": {
+    "mean_ms": 1.5574684000000616,
+    "p50_ms": 1.5533349999827806,
+    "p95_ms": 1.6047504500164678,
+    "max_ms": 1.8680420000123377
+  },
+  "total": {
+    "mean_ms": 14.022044070001414,
+    "p50_ms": 13.905423499977587,
+    "p95_ms": 14.929777950007404,
+    "max_ms": 19.04869000003373
+  }
+}

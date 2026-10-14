@@ -25,13 +25,25 @@ Read the whole page once before starting. Each step says what you should see; **
 
 ---
 
+## Easiest way: the web dashboard
+Most of Parts 2-4 below can be done from a browser. After Part 1 (install) run on the Jetson:
+```bash
+scripts/start_dashboard.sh
+```
+It prints a URL like `http://<jetson-ip>:8080/?token=XXXX`. Open it from any computer on the same network.
+You can run the self-check, latency benchmarks (CPU vs TensorRT), a live latency chart, the TensorRT engine build, `trtexec`,
+and sorting runs with video, all with live logs; then **download the results and videos** (single files or a zip per run).
+Keep the token private: anyone with it can start tests on the Jetson. The ESP32 and ROS parts (Parts 4-5) still need a terminal.
+
+---
+
 ## 1. Get the code and install
 
 ```bash
 git clone https://github.com/RPi-Boy/Automator.git
 cd Automator
 export AUTOMATOR_ROOT=$PWD          # needed in EVERY new terminal (or add it to ~/.bashrc)
-scripts/jetson_install.sh           # apt packages + pip install pybullet onnxruntime (pybullet compiles: 10-20 min)
+scripts/jetson_install.sh           # apt (TensorRT 10 + DLA libs, ffmpeg, OpenCV, micro-ROS agent) + pip (numpy<2, pybullet, onnxruntime, cuda-python); pybullet may compile: 10-20 min
 ```
 
 Build the ROS package:
@@ -46,7 +58,7 @@ Run the self-check (every later step assumes it passes):
 ```bash
 python3 scripts/jetson_selfcheck.py
 ```
-**Expected:** a list of `[PASS]` lines and **`0 FAIL`** at the end. `[WARN]` for tensorrt/torch/engine/ESP32 is fine at this point. Typical results to look at: `PyBullet render ... ms/frame` (should be well under 300), `detector finds 3 spawned objects`, `inference via onnxruntime[...]`. The file `jetson_selfcheck.txt` is written, which you will send back in Part 6.
+**Expected:** a list of `[PASS]` lines and **`0 FAIL`** at the end. `[WARN]` for torch, the TensorRT engine (not built yet) and the ESP32 is fine at this point; `tensorrt` should import (version 10.x). Typical results to look at: `PyBullet render ... ms/frame` (should be well under 300), `detector finds 3 spawned objects`, `inference via onnxruntime[...]`. The file `jetson_selfcheck.txt` is written, which you will send back in Part 6.
 
 **Every new terminal** needs:
 ```bash
@@ -74,6 +86,7 @@ A PyBullet window opens showing the arm, 4 shape trays and the objects; the arm 
 python3 scripts/benchmark_edge.py --model models/perception.onnx --tag jetson_onnx
 ```
 **Expected:** JSON printed, then `wrote models/benchmark_jetson_onnx.json`. The reference PC (Intel i7, CPU only) gave **detection 5.4 ms + network 5.8 ms + planning 0.8 ms = 12.0 ms mean** (`total.mean_ms`). Write your numbers down; they are the point of this exercise.
+**Reference on a Jetson Orin Nano Super (MAXN_SUPER): ONNX Runtime CPU total 11.3 ms mean; in the default 25 W mode about 14 ms.** Much slower than this means the board is in a low power mode or is throttling.
 
 ---
 
@@ -84,7 +97,7 @@ Engines must be built **on this Jetson** (they do not transfer between machines)
 scripts/build_trt_engine.sh fp16          # ~2-5 min  -> models/perception_fp16.engine
 scripts/build_trt_engine.sh fp32          # for comparison -> models/perception_fp32.engine
 ```
-**Expected:** `built models/perception_fp16.engine`. If `trtexec` is not found: `export TRTEXEC=$(find /usr -name trtexec 2>/dev/null | head -1)` and rerun.
+**Expected:** `built models/perception_fp16.engine` (reference: FP16 about 3 minutes, FP32 about 1.5 minutes). If `trtexec` is not found: `export TRTEXEC=$(find /usr -name trtexec 2>/dev/null | head -1)` and rerun.
 
 **3a. Pure GPU latency (needs nothing but TensorRT):**
 ```bash
@@ -93,13 +106,17 @@ scripts/build_trt_engine.sh fp32          # for comparison -> models/perception_
 /usr/src/tensorrt/bin/trtexec --loadEngine=models/perception_fp32.engine \
    --shapes=crop:3x3x128x128,bbox_feat:3x4 --iterations=200 2>&1 | tee trtexec_fp32.log | tail -25
 ```
-Note the lines `GPU Compute Time: ... mean = ... ms` for FP16 and FP32.
+Note the lines `GPU Compute Time: ... mean = ... ms` for FP16 and FP32. **Reference (batch 3, MAXN_SUPER): FP16 about 0.89 ms, FP32 about 1.10 ms.**
 
-**3b. Whole pipeline with the engine (only works if the self-check showed `torch CUDA: True`):**
+**3b. Whole pipeline with the engine:**
 ```bash
 python3 scripts/benchmark_edge.py --model models/perception_fp16.engine --tag jetson_trt_fp16
+python3 scripts/benchmark_edge.py --model models/perception_fp32.engine --tag jetson_trt_fp32
 ```
-If this fails with an import error for `torch` or CUDA, that is a known limitation (it needs NVIDIA's CUDA PyTorch wheel). **Do not spend time on it:** write "TensorRT backend not available" in your notes, and use the `trtexec` numbers from 3a plus the ONNX Runtime numbers from Part 2. If `onnxruntime-gpu` is installed, `--model models/perception.onnx` also uses the GPU automatically (the self-check lists the providers).
+This uses TensorRT through `cuda-python` (no PyTorch needed). **Reference (MAXN_SUPER, 3 objects per frame): total about 5.9 ms for FP16 and 6.2 ms for FP32, against 11.3 ms for ONNX Runtime on the CPU.**
+If it fails with `ModuleNotFoundError: cuda`, run `pip3 install --user "cuda-python>=12.6,<13"`; if `import tensorrt` fails with `libnvdla_compiler.so` or `libcudla.so.1` missing, run
+`sudo apt install nvidia-l4t-dla-compiler libcudla-12-6 && sudo ldconfig` (both are in `scripts/jetson_install.sh`). If it still fails, write down the exact error and carry on with the ONNX and `trtexec` numbers.
+(ONNX Runtime from PyPI is CPU-only on the Jetson; the GPU path is this TensorRT backend.)
 
 ---
 
@@ -108,7 +125,7 @@ One command starts four nodes (simulated world, perception, planner, viewer wind
 ```bash
 scripts/run_jetson_demo.sh
 ```
-(Add `model_path:=$PWD/models/perception_fp16.engine` to use TensorRT if 3b worked.)
+(Add `model_path:=$PWD/models/perception_fp16.engine` to use TensorRT. The simulated camera is slow on the Jetson CPU, so the window updates at only a few frames per second; that is normal.)
 
 **What you should see** within ~15 seconds: a window called *Automator demo* with the **simulation on the left** (arm, trays, objects) and the **perception view on the right** (coloured boxes: green = recognised shape with its name and uncertainty `u`, red = UNKNOWN). Along the bottom, status lines: ARM IDLE/MOVING, last target, ESP32 status. The arm picks one object at a time and sorts it into its tray. When the table is empty it refills automatically.
 
@@ -190,7 +207,7 @@ Fill in this table (copy it into a message) and attach the listed files.
 |---|---|
 | Jetson model, JetPack version (`cat /etc/nv_tegra_release`), power mode | |
 | ONNX Runtime benchmark: total mean / p95 (ms) | |
-| TensorRT FP16 / FP32 GPU compute mean (ms) from trtexec | |
+| TensorRT FP16 / FP32 GPU compute mean (ms) from trtexec (reference 0.89 / 1.10) | |
 | Full-pipeline TensorRT benchmark worked? (yes / no, error) | |
 | Vision node time per frame in the ROS demo (typical ms) | |
 | Sorting seen in the demo: roughly how many objects sorted right / wrong | |
@@ -212,7 +229,7 @@ timeout 30 tegrastats --interval 500 | tee tegrastats_demo.log      # run while 
 | `ros2: command not found` | `source /opt/ros/humble/setup.bash` |
 | `Package 'arm_perception' not found` | `source ros2_ws/install/setup.bash`; if still missing, rebuild (Part 1) |
 | `Cannot find the Automator repo (perception/)` | `export AUTOMATOR_ROOT=$PWD` in the repo root, and build with `--symlink-install` |
-| `ModuleNotFoundError: pybullet` / `onnxruntime` | `pip3 install --user pybullet onnxruntime`; make sure you use `python3` (3.10), not a conda/venv Python |
+| `ModuleNotFoundError: pybullet` / `onnxruntime` | `pip3 install --user "numpy<2" pybullet onnxruntime`  (keep `numpy<2`: NumPy 2 breaks the system OpenCV with `_ARRAY_API not found`); make sure you use `python3` (3.10), not a conda/venv Python |
 | pybullet install takes ages or fails | normal to take 10-20 min; if it fails: `sudo apt install build-essential python3-dev cmake libgl1-mesa-dev` and retry |
 | No window appears / `cannot connect to display` | run from a terminal **on the Jetson desktop**; over SSH use `export DISPLAY=:0` (desktop must be logged in) or run with `viewer:=false save_video:=$PWD/run1.mp4` |
 | Window is black or "waiting for image..." | wait 15 s; check `ros2 topic hz /camera/image_raw` (should be ~3 Hz). If 0, `sim_bridge_node` crashed: read its error in the launch terminal |
@@ -220,7 +237,7 @@ timeout 30 tegrastats --interval 500 | tee tegrastats_demo.log      # run while 
 | Arm never moves | perception only runs when the arm is idle for 0.6 s; check `/arm_target` is being published (`ros2 topic hz /arm_target`); a permanent e-stop shows red - press **r** |
 | Immediate e-stop on every launch | an object may be touching another or the edge; press **r**. If it happens every time on a fresh start, report it |
 | `trtexec: not found` | `export TRTEXEC=$(find /usr -name trtexec | head -1)` |
-| `torch`/CUDA error in the TensorRT benchmark | known limitation, see 3b; skip it |
+| `No module named cuda` / `libnvdla_compiler.so` or `libcudla.so.1` not found in the TensorRT benchmark | see 3b: install `cuda-python`, or the DLA packages and run `sudo ldconfig` |
 | `/dev/ttyUSB0` permission denied | `sudo usermod -aG dialout $USER`, log out and in |
 | No `/dev/ttyUSB*` after plugging in | charge-only cable, or board needs the CP210x/CH340 driver (normally built into JetPack); try another cable |
 | Agent runs but `/esp32/status` never appears | press EN on the ESP32 **after** the agent started; close the Arduino Serial Monitor; check the agent was started on the right device |

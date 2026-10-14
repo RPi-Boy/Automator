@@ -17,7 +17,6 @@ import time
 
 import numpy as np
 import pybullet as p
-import torch
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, ROOT)
@@ -25,7 +24,7 @@ sys.path.insert(0, os.path.join(ROOT, "ros2_ws", "src", "arm_perception"))
 
 from arm_perception.trajectory import PickPlaceSequencer  # noqa: E402
 from perception.detector import detect  # noqa: E402
-from perception.mobilenet_uncertainty import MobileNetUncertaintyBackbone  # noqa: E402
+from perception.inference import load_backend  # noqa: E402
 from sim.sim_arm import CTRL_HZ, PHYS_HZ, SimArm  # noqa: E402
 from perception.targeting import choose_target  # noqa: E402
 from sim.scene import BIN_VISUAL_RADIUS, CLASS_NAMES, NUM_CLASSES, SortScene, bin_table, in_pick_region  # noqa: E402
@@ -40,22 +39,56 @@ def spectator_frame(client, w=640, h=480):
 
 
 def load_model(path):
-    m = MobileNetUncertaintyBackbone(num_classes=len(CLASS_NAMES), feature_dim=128)
-    m.load_state_dict(torch.load(path, map_location="cpu"))
-    m.is_fitted = True
-    return m.eval()
+    """Any backend the ROS node supports: .onnx (ONNX Runtime), .engine (TensorRT), .pt (PyTorch)."""
+    return load_backend(path)
+
+
+class LiveSink:
+    """Writes the newest frame (atomically) and a metrics log so a web page can follow a run live."""
+
+    def __init__(self, live_dir, jsonl=None, max_fps=8):
+        self.dir, self.max_fps, self.last = live_dir, max_fps, 0.0
+        if jsonl:
+            os.makedirs(os.path.dirname(os.path.abspath(jsonl)), exist_ok=True)
+        self.jsonl = open(jsonl, "a", buffering=1) if jsonl else None
+        if live_dir:
+            os.makedirs(live_dir, exist_ok=True)
+
+    def frame(self, rgb):
+        now = time.time()
+        if not self.dir or now - self.last < 1.0 / self.max_fps:
+            return
+        self.last = now
+        import cv2
+        tmp = os.path.join(self.dir, "live.tmp.jpg")
+        cv2.imwrite(tmp, rgb[:, :, ::-1], [cv2.IMWRITE_JPEG_QUALITY, 80])
+        os.replace(tmp, os.path.join(self.dir, "live.jpg"))
+
+    def metric(self, **kw):
+        if self.jsonl:
+            self.jsonl.write(json.dumps({"t": time.time(), **kw}) + "\n")
 
 
 def perceive(model, scene, reference):
+    """Detect + classify. Timing of the last call is left in perceive.timing (ms)."""
     rgb, _ = scene.camera.render(scene.client)
+    t0 = time.perf_counter()
+    dets = [d for d in detect(rgb, reference, scene.camera) if in_pick_region(d["geom_xyz"][:2])]
+    t1 = time.perf_counter()
     out = []
-    for d in detect(rgb, reference, scene.camera):
-        if not in_pick_region(d["geom_xyz"][:2]):
-            continue
-        x = torch.from_numpy(d["crop"]).permute(2, 0, 1).float().unsqueeze(0) / 255.0
-        cls, off, unc = model.predict_with_uncertainty(x, torch.from_numpy(d["bbox_feat"]).unsqueeze(0))
-        out.append({"xyz": d["geom_xyz"] + off[0].numpy(), "cls": int(cls[0]), "unc": float(unc[0])})
+    if dets:
+        crops = np.ascontiguousarray(np.stack([d["crop"] for d in dets]).transpose(0, 3, 1, 2).astype(np.float32) / 255.0)
+        logits, off, unc = model(crops, np.stack([d["bbox_feat"] for d in dets]).astype(np.float32))
+        for i, d in enumerate(dets):
+            out.append({"xyz": d["geom_xyz"] + off[i], "cls": int(logits[i].argmax()), "unc": float(unc[i]), "bbox": d["bbox"]})
+    t2 = time.perf_counter()
+    perceive.timing = {"detect_ms": (t1 - t0) * 1e3, "network_ms": (t2 - t1) * 1e3, "objects": len(dets)}
+    perceive.last_rgb = rgb
     return out
+
+
+perceive.timing = {}
+perceive.last_rgb = None
 
 
 VISION_HZ = 5
@@ -63,7 +96,7 @@ SETTLE_S = 0.6        # same defaults as evidential_vision_node
 MAX_SIM_S = 150.0
 
 
-def run_trial(model, seed, n_objects, client, frames=None, n_unknown=0):
+def run_trial(model, seed, n_objects, client, frames=None, n_unknown=0, live=None):
     """Replays the ROS dataflow in-process: control at CTRL_HZ with the node's default sequencer, vision at 5 Hz
     only while the arm is idle and settled (as evidential_vision_node does), worst-OOD-first target choice."""
     rng = np.random.default_rng(seed)
@@ -95,12 +128,18 @@ def run_trial(model, seed, n_objects, client, frames=None, n_unknown=0):
         arm.command(seq.tick(dt), scene.objects)
         tick += 1
         idle_ticks = 0 if seq.busy else idle_ticks + 1
-        if frames is not None and seq.busy and tick % 3 == 0:
-            frames.append(spectator_frame(client))
+        if seq.busy and tick % 3 == 0 and (frames is not None or live is not None):
+            view = spectator_frame(client)
+            if frames is not None:
+                frames.append(view)
+            if live is not None:
+                live.frame(view)
         if seq.busy or idle_ticks < settle_ticks or tick - last_vision < vision_period:
             continue
         last_vision = tick
         dets = perceive(model, scene, reference)
+        if live is not None:
+            live.metric(kind="perception", seed=seed, **perceive.timing)
         for b in unknown_bodies:   # bookkeeping only: what did perception make of each unseen object?
             near = [d for d in dets if np.linalg.norm(d["xyz"][:2] - start_pos[b][:2]) < 0.05]
             if near and not arm.held:
@@ -148,29 +187,40 @@ def run_trial(model, seed, n_objects, client, frames=None, n_unknown=0):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="models/perception.pt")
+    ap.add_argument("--model", default="models/perception.onnx", help=".onnx, .engine or .pt")
     ap.add_argument("--trials", type=int, default=10)
     ap.add_argument("--objects", type=int, default=4)
     ap.add_argument("--seed", type=int, default=1000)
     ap.add_argument("--unknown", type=int, default=0, help="replace this many objects with unseen random meshes")
     ap.add_argument("--gui", action="store_true")
     ap.add_argument("--video", default="", help="write an mp4 of the first trial from a spectator camera")
+    ap.add_argument("--video-dir", default="", help="write one mp4 per trial into this directory")
+    ap.add_argument("--live-dir", default="", help="keep live.jpg (newest frame) updated here, for the web dashboard")
+    ap.add_argument("--metrics-jsonl", default="", help="append per-perception-cycle latency and per-trial results as JSON lines")
     ap.add_argument("--out", default="models/sort_results.json")
     args = ap.parse_args()
 
     model = load_model(os.path.join(ROOT, args.model))
     client = p.connect(p.GUI if args.gui else p.DIRECT)
+    live = LiveSink(args.live_dir or None, args.metrics_jsonl or None)
+    print(f"backend: {model.name}", flush=True)
     results = []
     for t in range(args.trials):
-        frames = [] if (args.video and t == 0) else None
-        r = run_trial(model, args.seed + t, args.objects, client, frames, args.unknown)
+        want_video = bool(args.video_dir) or (args.video and t == 0)
+        frames = [] if want_video else None
+        r = run_trial(model, args.seed + t, args.objects, client, frames, args.unknown, live)
         if frames:
             import cv2
-            vw = cv2.VideoWriter(os.path.join(ROOT, args.video), cv2.VideoWriter_fourcc(*'mp4v'), 20, (640, 480))
+            path = os.path.join(args.video_dir, f"trial_{t:02d}_seed{args.seed + t}.mp4") if args.video_dir \
+                else os.path.join(ROOT, args.video)
+            os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+            vw = cv2.VideoWriter(path, cv2.VideoWriter_fourcc(*'mp4v'), 20, (640, 480))
             for fr in frames:
                 vw.write(fr[:, :, ::-1])
             vw.release()
-            print(f'wrote {args.video} ({len(frames)} frames)')
+            print(f'wrote {path} ({len(frames)} frames)', flush=True)
+        live.metric(kind="trial", trial=t, sorted_correctly=r["sorted_correctly"], objects=r["objects"],
+                    estops=r["estops"], sim_seconds=r["sim_seconds"])
         results.append(r)
         print(f"trial {t:2d}: {r['sorted_correctly']}/{r['objects']} sorted correctly, "
               f"{r['wrong_or_off_bin']} off-bin, {r['left_on_table']} left, e-stops {r['estops']}")

@@ -1,7 +1,7 @@
 # System Architecture
 
 **Project:** Team Avatar Automator - shape-sorting 4-DOF arm, simulated in PyBullet, with perception and control running as ROS 2 nodes on a Jetson Orin Nano and a micro-ROS ESP32 as the actuator/safety controller.
-**Status:** simulation is the product; the Jetson and ESP32 prove the edge pipeline. Items not yet run on hardware are marked *(unverified)*.
+**Status:** simulation is the product; the Jetson and ESP32 prove the edge pipeline. The perception/planning path is measured on a Jetson Orin Nano Super (section 6); ROS-under-ROS, the ESP32 and the arm are *(unverified)*.
 
 ## 1. Data flow
 
@@ -60,20 +60,42 @@ Complexity: Mahalanobis scoring is O(C * D^2) per crop (C = 4 classes, D = 128);
 
 Latched until `/estop_reset` and the hardware line is released. Details and wiring: `firmware/esp32_microros/README.md`.
 
+## 4b. Inference backends and edge deployment
+`perception/inference.py` loads the same exported graph through three backends chosen by file extension: `.engine` (**TensorRT 10 through `cuda-python`**, no PyTorch needed), `.onnx` (ONNX Runtime; CPU-only on aarch64 PyPI) and `.pt` (PyTorch).
+Engines are built on the Jetson (`scripts/build_trt_engine.sh`, dynamic batch 1-8) because they are tied to the GPU and TensorRT version. On a fresh JetPack 6 image TensorRT, CUDA and the DLA libraries are not installed; `scripts/jetson_install.sh` adds them.
+
+## 4c. Observability and test tooling
+- **Viewer** (`sim_viewer_node`): simulation view | annotated perception view (`/perception/debug`) with a status bar (arm state, last target, ESP32 link) and keyboard e-stop / reset; optional mp4 recording.
+- **One-command launch** (`launch/sort_demo.launch.py`): simulated world, vision node, planner and viewer. `sim_bridge_node` also publishes a wide `/sim/spectator` view and can open PyBullet's GUI.
+- **ESP32 heartbeat** `/esp32/status` (Int32, 5 Hz): bit0 e-stop latched, bit1 motors enabled, bit2 command fresh (< 200 ms), bit3 hardware e-stop line, bits 8-23 count of `/joint_commands` received. It lets the USB micro-ROS link be checked with no motors attached.
+- **Edge-test dashboard** (`webapp/server.py`, stdlib only): runs a fixed list of jobs (self-check, benchmarks, live latency, trtexec, engine build, sorting with video, ROS snapshot), streams log / latency chart / live frame / `tegrastats` telemetry, and serves results and H.264 videos for download. Token-protected; no arbitrary commands.
+
 ## 5. RL (SAC)
 
-`sim/reach_env.py` trains SAC to put the fingertip within 1 cm of a random reachable target (14-d observation, 4-d joint-velocity action). It is a benchmark against the analytic IK; the sorting pipeline does **not** depend on it.
+`sim/reach_env.py` trains SAC to put the fingertip within 1 cm of a random reachable target (17-d observation including target minus fingertip, 4-d joint-velocity action). It is a benchmark against the analytic IK; the sorting pipeline does **not** depend on it.
 
-## 6. Layout
+## 6. Measured edge performance (Jetson Orin Nano Super, 3 objects per frame)
+| Backend | Detect | Network | Plan | Total mean | p95 |
+|---|---|---|---|---|---|
+| ONNX Runtime, CPU | 4.14 ms | 5.94 | 1.17 | 11.25 ms | 13.84 |
+| TensorRT FP32 | 3.04 | 2.04 | 1.08 | 6.16 ms | 6.48 |
+| TensorRT FP16 | 3.00 | 1.84 | 1.07 | **5.91 ms** | 6.20 |
+
+TensorRT GPU compute alone is 0.89 ms (FP16). A 60 s run at 30 Hz held 6.0 ms with no drift at about 7 W and 7 % CPU (CPU path: 10.2 ms, 8.5 W, 44 % CPU). Details: `docs/JETSON_RESULTS.md`.
+
+## 7. Layout
 
 ```
-perception/   detector.py camera.py mobilenet_uncertainty.py inference.py
+perception/   detector.py camera.py mobilenet_uncertainty.py inference.py targeting.py
 sim/          scene.py sim_arm.py reach_env.py arm_env.py(legacy) trajectory_planner.py(legacy) urdf/
 scripts/      generate_sim_dataset.py train_perception.py sort_demo.py train_sac_reach.py
-              benchmark_edge.py build_trt_engine.sh
+              benchmark_edge.py build_trt_engine.sh start_dashboard.sh run_jetson_demo.sh
+              start_microros_agent.sh jetson_install.sh jetson_selfcheck.py
 ros2_ws/src/arm_perception/arm_perception/
-              kinematics.py trajectory.py  joint_trajectory_node.py evidential_vision_node.py
-              sim_bridge_node.py imx219_camera_node.py(real camera, not used in the sim demo)
+              config.py kinematics.py trajectory.py joint_trajectory_node.py evidential_vision_node.py
+              sim_bridge_node.py sim_viewer_node.py overlay.py imx219_camera_node.py(real camera, not used in the sim demo)
+              ../../launch/sort_demo.launch.py
+webapp/       server.py static/index.html   (edge-test dashboard)
 firmware/esp32_microros/esp32_actuator/   Arduino sketch
-tests/        kinematics, trajectory, perception, integration, sim
+tests/        kinematics, trajectory, perception, integration, overlay, sim
 ```
