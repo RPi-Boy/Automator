@@ -28,6 +28,8 @@ PICK_R = (0.30, 0.38)
 PICK_THETA = (-0.7, 0.7)
 BIN_VISUAL_RADIUS = 0.065   # inner radius of the tray rim
 MIN_OBJECT_SEPARATION = 0.11
+MAX_REACHABLE_OBJECTS = 4   # at most this many objects fit in the pick region with the image-space separation below
+FAR_R, FAR_THETA = (0.56, 0.60), (-0.6, 0.3)   # strip beyond the arm's reach (IK refuses it), still in the camera image
 # Silhouettes of objects closer than this in the image merge into one blob, which the OOD score (rightly) calls
 # unfamiliar. The demo keeps spawned objects apart in image space; touching objects stopping the arm is accepted.
 MIN_PIXEL_SEPARATION = 100
@@ -113,13 +115,13 @@ def make_random_urdf(client, rng, max_dim=0.055, pool=range(1000)):
     return body, None
 
 
-def sample_positions(rng, n, min_sep=MIN_OBJECT_SEPARATION, restarts=2000, camera=None, min_px=0):
+def sample_positions(rng, n, min_sep=MIN_OBJECT_SEPARATION, restarts=2000, camera=None, min_px=0, r_range=PICK_R, th_range=PICK_THETA):
     """Rejection-sample n pick positions at least min_sep apart (restarts from scratch when a greedy
     draw paints itself into a corner)."""
     for _ in range(restarts):
         pts = []
         for _ in range(60):
-            r, th = rng.uniform(*PICK_R), rng.uniform(*PICK_THETA)
+            r, th = rng.uniform(*r_range), rng.uniform(*th_range)
             c = np.array([r * math.cos(th), r * math.sin(th)])
             ok = all(np.linalg.norm(c - q) >= min_sep for q in pts)
             if ok and camera is not None and min_px:
@@ -172,8 +174,13 @@ class SortScene:
 
     def spawn(self, class_ids, rng, positions=None):
         """class_ids entries: int shape id, or None for an unseen random URDF (OOD)."""
-        positions = positions or sample_positions(rng, len(class_ids), camera=self.camera, min_px=MIN_PIXEL_SEPARATION)
-        for cid, xy in zip(class_ids, positions):
+        n_reach = min(len(class_ids), MAX_REACHABLE_OBJECTS)   # up to 4 objects: drawn exactly as before
+        if positions is None:
+            positions = sample_positions(rng, n_reach, camera=self.camera, min_px=MIN_PIXEL_SEPARATION)
+            if len(class_ids) > n_reach:   # the rest go where the arm cannot reach, so it has to refuse them
+                positions += sample_positions(rng, len(class_ids) - n_reach, camera=self.camera, min_px=MIN_PIXEL_SEPARATION // 2,
+                                              r_range=FAR_R, th_range=FAR_THETA)
+        for k, (cid, xy) in enumerate(zip(class_ids, positions)):
             if cid is None:
                 body, half_h = make_random_urdf(self.client, rng)
                 p.resetBasePositionAndOrientation(body, [xy[0], xy[1], 0.1], [0, 0, 0, 1], physicsClientId=self.client)
@@ -182,7 +189,7 @@ class SortScene:
                 p.resetBasePositionAndOrientation(
                     body, [xy[0], xy[1], half_h], p.getBasePositionAndOrientation(body, physicsClientId=self.client)[1],
                     physicsClientId=self.client)
-            self.objects.append({"body": body, "class_id": cid, "half_h": half_h})
+            self.objects.append({"body": body, "class_id": cid, "half_h": half_h, "reachable": k < n_reach})
         if any(o["class_id"] is None for o in self.objects):
             for _ in range(120):  # let unseen meshes settle
                 p.stepSimulation(physicsClientId=self.client)

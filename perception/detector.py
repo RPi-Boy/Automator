@@ -67,6 +67,13 @@ def detect(rgb, reference, camera):
     return out
 
 
+def in_refusal_region(xy, r_range=(0.52, 0.66), theta_range=(-0.75, 0.45)):
+    """True if a world xy lies in the far strip the camera sees but the arm cannot reach. Extra objects are placed
+    there on purpose, to show the arm refusing targets it cannot get to (the IK raises, nothing moves)."""
+    r, th = math.hypot(xy[0], xy[1]), math.atan2(xy[1], xy[0])
+    return r_range[0] <= r <= r_range[1] and theta_range[0] <= th <= theta_range[1]
+
+
 def in_pick_region(xy, r_range=(0.28, 0.41), theta_max=0.8):
     """True if a world xy lies in the pick area (so objects already sorted into bins are ignored)."""
     r, th = math.hypot(xy[0], xy[1]), math.atan2(xy[1], xy[0])

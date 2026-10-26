@@ -158,7 +158,10 @@ def _bench_cmd(backend, run_dir, extra):
 
 
 def job_selfcheck(p, run_dir):
-    return [[PY, "scripts/jetson_selfcheck.py"]]
+    cmd = [PY, "scripts/jetson_selfcheck.py"]
+    if not os.path.exists("/opt/ros/humble/setup.bash"):   # e.g. a PC: missing ROS is a warning, not a failure
+        cmd.append("--skip-ros")
+    return [cmd]
 
 
 def job_bench(p, run_dir):
@@ -622,6 +625,14 @@ def lan_addresses():
         addrs.update(a for a in out if re.fullmatch(r"\d+\.\d+\.\d+\.\d+", a))
     except OSError:
         pass
+    if not addrs:   # distros whose hostname has no -I (Arch, Alpine): ask iproute2, skipping docker and bridges
+        try:
+            for line in subprocess.run(["ip", "-4", "-o", "addr", "show", "scope", "global"], capture_output=True, text=True).stdout.splitlines():
+                f = line.split()
+                if len(f) > 3 and not f[1].startswith(("docker", "br-", "veth")):
+                    addrs.add(f[3].split("/")[0])
+        except OSError:
+            pass
     return sorted(addrs) or ["127.0.0.1"]
 
 
